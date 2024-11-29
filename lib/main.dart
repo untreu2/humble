@@ -30,30 +30,32 @@ class _HumbleState extends State<Humble> {
     );
   }
 
-  ThemeData _buildLightTheme() {
-    return ThemeData.light().copyWith(
-      colorScheme: ColorScheme.light(
-        primary: Colors.black,
-        secondary: Colors.black,
-        surface: Colors.white,
-        error: Colors.black,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Colors.black,
-        onError: Colors.white,
+ThemeData _buildLightTheme() {
+  return ThemeData.light().copyWith(
+    scaffoldBackgroundColor: Color(0xFFFBF1C7),
+    colorScheme: ColorScheme.light(
+      primary: Color(0xFF458588),
+      secondary: Color(0xFFB16286), 
+      surface: Color(0xFFFBF1C7), 
+      error: Color(0xFFCC241D),
+      onPrimary: Color(0xFFFBF1C7), 
+      onSecondary: Color(0xFFFBF1C7),
+      onSurface: Color(0xFF282828), 
+      onError: Color(0xFFFBF1C7),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Color(0xFF458588),
+        foregroundColor: Color(0xFFFBF1C7),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
 
   ThemeData _buildDarkTheme() {
     return ThemeData.dark().copyWith(
-      colorScheme: ColorScheme.dark(
+      scaffoldBackgroundColor: Colors.black,
+      colorScheme: const ColorScheme.dark(
         primary: Colors.white,
         secondary: Colors.white,
         surface: Colors.black,
