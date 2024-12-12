@@ -4,10 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(Humble());
+  runApp(const Humble());
 }
 
 class Humble extends StatefulWidget {
+  const Humble({super.key});
+
   @override
   _HumbleState createState() => _HumbleState();
 }
@@ -32,8 +34,8 @@ class _HumbleState extends State<Humble> {
 
 ThemeData _buildLightTheme() {
   return ThemeData.light().copyWith(
-    scaffoldBackgroundColor: Color(0xFFFBF1C7),
-    colorScheme: ColorScheme.light(
+    scaffoldBackgroundColor: const Color(0xFFFBF1C7),
+    colorScheme: const ColorScheme.light(
       primary: Color(0xFF458588),
       secondary: Color(0xFFB16286), 
       surface: Color(0xFFFBF1C7), 
@@ -45,8 +47,8 @@ ThemeData _buildLightTheme() {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF458588),
-        foregroundColor: Color(0xFFFBF1C7),
+        backgroundColor: const Color(0xFF458588),
+        foregroundColor: const Color(0xFFFBF1C7),
       ),
     ),
   );
@@ -113,7 +115,7 @@ ThemeData _buildLightTheme() {
 class FastingScreen extends StatefulWidget {
   final VoidCallback toggleDarkMode;
 
-  const FastingScreen({required this.toggleDarkMode});
+  const FastingScreen({super.key, required this.toggleDarkMode});
 
   @override
   _FastingScreenState createState() => _FastingScreenState();
@@ -122,14 +124,14 @@ class FastingScreen extends StatefulWidget {
 class _FastingScreenState extends State<FastingScreen> {
   DateTime? _lastMealTime;
   late Timer _timer;
-  Duration _elapsedTime = Duration(seconds: 0);
+  Duration _elapsedTime = const Duration(seconds: 0);
   bool _timerRunning = false;
   List<Duration> _fastDurations = [];
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(Duration(seconds: 1), _updateElapsedTime);
+    _timer = Timer.periodic(const Duration(seconds: 1), _updateElapsedTime);
     _loadLastMealTime();
     _loadFastDurations();
   }
@@ -142,7 +144,7 @@ class _FastingScreenState extends State<FastingScreen> {
 
   void _startTimer() {
     if (!mounted) return;
-    _timer = Timer.periodic(Duration(seconds: 1), _updateElapsedTime);
+    _timer = Timer.periodic(const Duration(seconds: 1), _updateElapsedTime);
     setState(() {
       _timerRunning = true;
     });
@@ -169,15 +171,15 @@ class _FastingScreenState extends State<FastingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Humble'),
+        title: const Text('Humble'),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.favorite),
+          icon: const Icon(Icons.favorite),
           onPressed: _showDonateDialog,
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.lightbulb),
+            icon: const Icon(Icons.lightbulb),
             onPressed: widget.toggleDarkMode,
           ),
         ],
@@ -196,32 +198,32 @@ class _FastingScreenState extends State<FastingScreen> {
                     _saveLastMealTime();
                   });
                 },
-                child: Text('Start fasting now'),
+                child: const Text('Start fasting now'),
               ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             if (_lastMealTime == null)
               ElevatedButton(
                 onPressed: () => _selectLastMealTime(context),
-                child: Text('Pick the date and time for your last meal'),
+                child: const Text('Pick the date and time for your last meal'),
               ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _lastMealTime != null
                 ? Column(
                     children: [
-                      Text(
+                      const Text(
                         'Time since your last meal:',
                         style: TextStyle(fontSize: 20),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
-                        '${formatDuration(_elapsedTime)}',
+                        formatDuration(_elapsedTime),
                         style:
-                            TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                            const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Text(
                         message,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
@@ -231,25 +233,25 @@ class _FastingScreenState extends State<FastingScreen> {
                     ],
                   )
                 : Container(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _fastDurations.isNotEmpty
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
+                      const Text(
                         'Last fast durations:',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Column(
                         children: List.generate(
                           _fastDurations.length > 3 ? 3 : _fastDurations.length,
                           (index) => Center(
                             child: Text(
                               '${formatDuration(_fastDurations[index])}',
-                              style: TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
                         ),
@@ -257,7 +259,7 @@ class _FastingScreenState extends State<FastingScreen> {
                       if (_fastDurations.length > 3)
                         TextButton(
                           onPressed: _showAllDurations,
-                          child: Text("Show more..."),
+                          child: const Text("Show more..."),
                         ),
                     ],
                   )
@@ -268,7 +270,7 @@ class _FastingScreenState extends State<FastingScreen> {
       bottomNavigationBar: _lastMealTime != null
           ? Container(
               width: double.infinity,
-              padding: EdgeInsets.only(left: 16.0, right: 16.0, bottom: 35.0),
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 35.0),
               child: ElevatedButton(
                 onPressed: () {
                   setState(() {
@@ -276,14 +278,14 @@ class _FastingScreenState extends State<FastingScreen> {
                     _fastDurations.insert(0, _elapsedTime);
                     _saveFastDurations();
                     _lastMealTime = null;
-                    _elapsedTime = Duration(seconds: 0);
+                    _elapsedTime = const Duration(seconds: 0);
                     _stopTimer();
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
-                child: Text("End fasting"),
+                child: const Text("End fasting"),
               ),
             )
           : null,
@@ -332,7 +334,7 @@ class _FastingScreenState extends State<FastingScreen> {
 
         if (selectedDateTime.isAfter(DateTime.now())) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text("Please select a date and time before the current time."),
             ),
           );
@@ -391,21 +393,21 @@ class _FastingScreenState extends State<FastingScreen> {
       context: context,
       builder: (context) {
         return Container(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              const Text(
                 'All Fast Durations',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               ..._fastDurations.map(
                 (duration) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Text(
                     formatDuration(duration),
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),
@@ -437,45 +439,45 @@ class _FastingScreenState extends State<FastingScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Center(child: Text('Donate')),
+          title: const Center(child: Text('Donate')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(height: 10),
-              Row(children: [Expanded(child: Text('Lightning:'))]),
+              const SizedBox(height: 10),
+              const Row(children: [Expanded(child: Text('Lightning:'))]),
               Row(
                 children: [
-                  Expanded(child: Text('untreu@walletofsatoshi.com')),
+                  const Expanded(child: Text('untreu@walletofsatoshi.com')),
                   IconButton(
-                    icon: Icon(Icons.copy),
+                    icon: const Icon(Icons.copy),
                     onPressed: () {
                       Clipboard.setData(
-                          ClipboardData(text: 'untreu@walletofsatoshi.com'))
+                          const ClipboardData(text: 'untreu@walletofsatoshi.com'))
                           .then((_) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Copied.')),
+                          const SnackBar(content: Text('Copied.')),
                         );
                       });
                     },
                   ),
                 ],
               ),
-              SizedBox(height: 10),
-              Row(children: [Expanded(child: Text("On-chain:"))]),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
+              const Row(children: [Expanded(child: Text("On-chain:"))]),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                       child: SelectableText(
                           'bc1qr2zfelma4vmsnwhyn88yctfxjtmu2d0xs55eh3')),
                   IconButton(
-                    icon: Icon(Icons.copy),
+                    icon: const Icon(Icons.copy),
                     onPressed: () {
                       Clipboard.setData(
-                          ClipboardData(text: 'bc1qr2zfelma4vmsnwhyn88yctfxjtmu2d0xs55eh3'))
+                          const ClipboardData(text: 'bc1qr2zfelma4vmsnwhyn88yctfxjtmu2d0xs55eh3'))
                           .then((_) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Copied.')),
+                          const SnackBar(content: Text('Copied.')),
                         );
                       });
                     },
@@ -489,7 +491,7 @@ class _FastingScreenState extends State<FastingScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Center(child: Text('Close')),
+              child: const Center(child: Text('Close')),
             ),
           ],
         );
