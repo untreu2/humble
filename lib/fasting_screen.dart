@@ -139,7 +139,57 @@ class _FastingScreenState extends State<FastingScreen> {
             ),
           );
         }),
+        const SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: _showCustomFastingDialog,
+          child: const Text('Custom'),
+        ),
       ],
+    );
+  }
+
+  Future<void> _showCustomFastingDialog() async {
+    final TextEditingController controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Custom fasting duration'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Enter fasting duration in hours',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); 
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final input = controller.text;
+                if (input.isNotEmpty) {
+                  final hours = int.tryParse(input);
+                  if (hours != null && hours > 0) {
+                    setState(() {
+                      _selectedFastingGoal = Duration(hours: hours);
+                      _lastMealTime = DateTime.now();
+                      saveLastMealTime(_lastMealTime);
+                      _startTimer();
+                    });
+                  }
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Start'),
+            ),
+          ],
+        );
+      },
     );
   }
 
