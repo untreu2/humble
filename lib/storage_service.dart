@@ -1,38 +1,52 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:async';
 
 Future<void> saveLastMealTime(DateTime? time) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final prefs = await SharedPreferences.getInstance();
   if (time != null) {
-    await prefs.setInt('lastMealTime', time.millisecondsSinceEpoch);
+    prefs.setString('lastMealTime', time.toIso8601String());
   } else {
-    await prefs.remove('lastMealTime');
+    prefs.remove('lastMealTime');
   }
 }
 
 Future<DateTime?> loadLastMealTime() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  int? storedTime = prefs.getInt('lastMealTime');
-  if (storedTime != null) {
-    return DateTime.fromMillisecondsSinceEpoch(storedTime);
+  final prefs = await SharedPreferences.getInstance();
+  String? timeString = prefs.getString('lastMealTime');
+  if (timeString != null) {
+    return DateTime.parse(timeString);
   }
   return null;
 }
 
 Future<void> saveFastDurations(List<Duration> durations) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String> durationStrings =
-      durations.map((duration) => duration.inSeconds.toString()).toList();
-  await prefs.setStringList('fastDurations', durationStrings);
+  final prefs = await SharedPreferences.getInstance();
+  List<String> durationsString = durations.map((d) => d.inSeconds.toString()).toList();
+  prefs.setStringList('fastDurations', durationsString);
 }
 
 Future<List<Duration>> loadFastDurations() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String>? storedDurations = prefs.getStringList('fastDurations');
-  if (storedDurations != null) {
-    return storedDurations
-        .map((duration) => Duration(seconds: int.parse(duration)))
-        .toList();
+  final prefs = await SharedPreferences.getInstance();
+  List<String>? durationsString = prefs.getStringList('fastDurations');
+  if (durationsString != null) {
+    return durationsString.map((s) => Duration(seconds: int.parse(s))).toList();
   }
   return [];
+}
+
+Future<void> saveSelectedFastingGoal(Duration? goal) async {
+  final prefs = await SharedPreferences.getInstance();
+  if (goal != null) {
+    prefs.setInt('selectedFastingGoal', goal.inSeconds);
+  } else {
+    prefs.remove('selectedFastingGoal');
+  }
+}
+
+Future<Duration?> loadSelectedFastingGoal() async {
+  final prefs = await SharedPreferences.getInstance();
+  int? goalSeconds = prefs.getInt('selectedFastingGoal');
+  if (goalSeconds != null) {
+    return Duration(seconds: goalSeconds);
+  }
+  return null;
 }

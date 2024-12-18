@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'format_utils.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
+import 'all_durations_page.dart';
+import 'quotes.dart';
 
 class FastingScreen extends StatefulWidget {
   final VoidCallback toggleDarkMode;
@@ -17,30 +20,49 @@ class FastingScreen extends StatefulWidget {
 
 class _FastingScreenState extends State<FastingScreen> {
   DateTime? _lastMealTime;
-  late Timer _timer;
+  Timer? _timer;
   Duration _elapsedTime = const Duration(seconds: 0);
   Duration? _selectedFastingGoal;
   bool _timerRunning = false;
   List<Duration> _fastDurations = [];
   final List<int> _fastingOptions = [8, 16, 24, 48, 72];
 
+  Quote? _randomQuote;
+
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), _updateElapsedTime);
-    _loadLastMealTime();
-    _loadFastDurations();
+    _loadData();
+    _selectRandomQuote();
+  }
+
+  Future<void> _loadData() async {
+    await _loadLastMealTime();
+    await _loadFastDurations();
+    await _loadSelectedFastingGoal();
+
+    if (_lastMealTime != null && _selectedFastingGoal != null) {
+      _startTimer();
+    }
+  }
+
+  void _selectRandomQuote() {
+    if (fastingQuotes.isNotEmpty) {
+      final random = Random();
+      setState(() {
+        _randomQuote = fastingQuotes[random.nextInt(fastingQuotes.length)];
+      });
+    }
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
   void _startTimer() {
-    if (!mounted) return;
-    _timer.cancel();
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), _updateElapsedTime);
     setState(() {
       _timerRunning = true;
@@ -48,8 +70,8 @@ class _FastingScreenState extends State<FastingScreen> {
   }
 
   void _stopTimer() {
+    _timer?.cancel();
     setState(() {
-      _timer.cancel();
       _timerRunning = false;
     });
   }
@@ -78,15 +100,68 @@ class _FastingScreenState extends State<FastingScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AllDurationsPage(durations: _fastDurations),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.lightbulb),
             onPressed: widget.toggleDarkMode,
           ),
         ],
       ),
-      body: Center(
-        child: _lastMealTime == null
-            ? _buildFastingOptions()
-            : _buildFastingContent(fastingCompleted, message),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 60,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 150,
+              width: double.infinity,
+              padding: const EdgeInsets.all(16.0),
+              child: _randomQuote != null
+                  ? SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            '"${_randomQuote!.text}"',
+                            style: const TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8.0),
+                          Text(
+                            '- ${_randomQuote!.author}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              child: _lastMealTime == null
+                  ? _buildFastingOptions()
+                  : _buildFastingContent(fastingCompleted, message),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: _lastMealTime != null
           ? Container(
@@ -96,12 +171,14 @@ class _FastingScreenState extends State<FastingScreen> {
                 onPressed: () {
                   setState(() {
                     saveLastMealTime(null);
+                    saveSelectedFastingGoal(null);
                     _fastDurations.insert(0, _elapsedTime);
                     saveFastDurations(_fastDurations);
                     _lastMealTime = null;
                     _elapsedTime = const Duration(seconds: 0);
                     _selectedFastingGoal = null;
                     _stopTimer();
+                    _selectRandomQuote();
                   });
                 },
                 style: ElevatedButton.styleFrom(
@@ -115,36 +192,50 @@ class _FastingScreenState extends State<FastingScreen> {
   }
 
   Widget _buildFastingOptions() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text(
-          'Select your fasting duration:',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 20),
-        ..._fastingOptions.map((hours) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _selectedFastingGoal = Duration(hours: hours);
-                  _lastMealTime = DateTime.now();
-                  saveLastMealTime(_lastMealTime);
-                  _startTimer();
-                });
-              },
-              child: Text('$hours-hour fast'),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ..._fastingOptions.map((hours) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedFastingGoal = Duration(hours: hours);
+                      _lastMealTime = DateTime.now();
+                      saveLastMealTime(_lastMealTime);
+                      saveSelectedFastingGoal(_selectedFastingGoal);
+                      _startTimer();
+                      _selectRandomQuote();
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 40),
+                  ),
+                  child: Text('$hours-hour fast'),
+                ),
+              ),
+            );
+          }).toList(),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _showCustomFastingDialog,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 40),
+                ),
+                child: const Text('Custom'),
+              ),
             ),
-          );
-        }),
-        const SizedBox(height: 10),
-        ElevatedButton(
-          onPressed: _showCustomFastingDialog,
-          child: const Text('Custom'),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -165,7 +256,7 @@ class _FastingScreenState extends State<FastingScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); 
+                Navigator.of(context).pop();
               },
               child: const Text('Cancel'),
             ),
@@ -179,7 +270,9 @@ class _FastingScreenState extends State<FastingScreen> {
                       _selectedFastingGoal = Duration(hours: hours);
                       _lastMealTime = DateTime.now();
                       saveLastMealTime(_lastMealTime);
+                      saveSelectedFastingGoal(_selectedFastingGoal);
                       _startTimer();
+                      _selectRandomQuote();
                     });
                   }
                 }
@@ -199,12 +292,24 @@ class _FastingScreenState extends State<FastingScreen> {
       remainingTime > Duration.zero ? remainingTime : Duration.zero
     );
 
+    double progressValue = 0.0;
+    if (_selectedFastingGoal != null && _selectedFastingGoal!.inSeconds > 0) {
+      final elapsedSeconds = _elapsedTime.inSeconds;
+      final goalSeconds = _selectedFastingGoal!.inSeconds;
+      progressValue = (elapsedSeconds / goalSeconds).clamp(0.0, 1.0);
+    }
+
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    Color backgroundColor = isDarkMode ? Colors.white : Colors.black;
+    Color progressColor = Colors.red;
+
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
           remainingTimeStr,
           style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
         Text(
@@ -216,8 +321,21 @@ class _FastingScreenState extends State<FastingScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        if (fastingCompleted) ...[
-          const SizedBox(height: 20),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10.0),
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: 16.0,
+              backgroundColor: backgroundColor,
+              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (fastingCompleted)
           const Text(
             'Fasting completed!',
             style: TextStyle(
@@ -227,9 +345,6 @@ class _FastingScreenState extends State<FastingScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-        ],
-        const SizedBox(height: 20),
-        _fastDurations.isNotEmpty ? _buildLastDurationsList() : Container(),
       ],
     );
   }
@@ -242,83 +357,29 @@ class _FastingScreenState extends State<FastingScreen> {
     return _selectedFastingGoal! - passed;
   }
 
-  Widget _buildLastDurationsList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text(
-          'Last fast durations:',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Column(
-          children: List.generate(
-            _fastDurations.length > 3 ? 3 : _fastDurations.length,
-            (index) => Center(
-              child: Text(
-                formatDuration(_fastDurations[index]),
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-        ),
-        if (_fastDurations.length > 3)
-          TextButton(
-            onPressed: _showAllDurations,
-            child: const Text("Show more..."),
-          ),
-      ],
-    );
-  }
-
-  void _loadLastMealTime() async {
+  Future<void> _loadLastMealTime() async {
     final time = await loadLastMealTime();
     if (time != null) {
       setState(() {
         _lastMealTime = time;
-        _startTimer();
       });
     }
   }
 
-  void _loadFastDurations() async {
+  Future<void> _loadSelectedFastingGoal() async {
+    final goal = await loadSelectedFastingGoal();
+    if (goal != null) {
+      setState(() {
+        _selectedFastingGoal = goal;
+      });
+    }
+  }
+
+  Future<void> _loadFastDurations() async {
     final durations = await loadFastDurations();
     setState(() {
       _fastDurations = durations;
     });
-  }
-
-  void _showAllDurations() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'All Fast Durations',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                ..._fastDurations.map(
-                  (duration) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text(
-                      formatDuration(duration),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void _showDonateDialog() {
