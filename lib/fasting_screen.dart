@@ -18,7 +18,7 @@ class FastingScreen extends StatefulWidget {
   _FastingScreenState createState() => _FastingScreenState();
 }
 
-class _FastingScreenState extends State<FastingScreen> {
+class _FastingScreenState extends State<FastingScreen> with TickerProviderStateMixin {
   DateTime? _lastMealTime;
   Timer? _timer;
   Duration _elapsedTime = const Duration(seconds: 0);
@@ -29,9 +29,28 @@ class _FastingScreenState extends State<FastingScreen> {
 
   Quote? _randomQuote;
 
+  late AnimationController _quoteController;
+  late Animation<double> _quoteAnimation;
+  late AnimationController _progressController;
+
   @override
   void initState() {
     super.initState();
+
+    _quoteController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _quoteAnimation = CurvedAnimation(
+      parent: _quoteController,
+      curve: Curves.easeIn,
+    );
+
+    _progressController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
     _loadData();
     _selectRandomQuote();
   }
@@ -52,12 +71,15 @@ class _FastingScreenState extends State<FastingScreen> {
       setState(() {
         _randomQuote = fastingQuotes[random.nextInt(fastingQuotes.length)];
       });
+      _quoteController.forward(from: 0.0);
     }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _quoteController.dispose();
+    _progressController.dispose();
     super.dispose();
   }
 
@@ -80,6 +102,7 @@ class _FastingScreenState extends State<FastingScreen> {
     if (_lastMealTime != null && _timerRunning && _selectedFastingGoal != null) {
       setState(() {
         _elapsedTime = DateTime.now().difference(_lastMealTime!);
+        _progressController.forward(from: 0.0);
       });
     }
   }
@@ -122,43 +145,55 @@ class _FastingScreenState extends State<FastingScreen> {
             top: 60,
             left: 0,
             right: 0,
-            child: Container(
-              height: 150,
-              width: double.infinity,
-              padding: const EdgeInsets.all(16.0),
-              child: _randomQuote != null
-                  ? SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            '"${_randomQuote!.text}"',
-                            style: const TextStyle(
-                              fontStyle: FontStyle.italic,
-                              fontSize: 16,
+            child: FadeTransition(
+              opacity: _quoteAnimation,
+              child: Container(
+                height: 150,
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0),
+                child: _randomQuote != null
+                    ? SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              '"${_randomQuote!.text}"',
+                              style: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontSize: 16,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8.0),
-                          Text(
-                            '- ${_randomQuote!.author}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                            const SizedBox(height: 8.0),
+                            Text(
+                              '- ${_randomQuote!.author}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    )
-                  : Container(),
+                          ],
+                        ),
+                      )
+                    : Container(),
+              ),
             ),
           ),
           Center(
             child: SingleChildScrollView(
-              child: _lastMealTime == null
-                  ? _buildFastingOptions()
-                  : _buildFastingContent(fastingCompleted, message),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: _lastMealTime == null
+                    ? _buildFastingOptions()
+                    : _buildFastingContent(fastingCompleted, message),
+              ),
             ),
           ),
         ],
@@ -184,55 +219,62 @@ class _FastingScreenState extends State<FastingScreen> {
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                child: const Text("End fasting"),
+                child: const Text("End Fasting"),
               ),
             )
           : null,
     );
   }
 
+  Widget _buildFastingButton(String text, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 40),
+        ),
+        child: Text(text),
+      ),
+    );
+  }
+
   Widget _buildFastingOptions() {
     return Padding(
+      key: const ValueKey('fastingOptions'),
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ..._fastingOptions.map((hours) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedFastingGoal = Duration(hours: hours);
-                      _lastMealTime = DateTime.now();
-                      saveLastMealTime(_lastMealTime);
-                      saveSelectedFastingGoal(_selectedFastingGoal);
-                      _startTimer();
-                      _selectRandomQuote();
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 40),
-                  ),
-                  child: Text('$hours-hour fast'),
+            return ScaleTransition(
+              scale: Tween<double>(begin: 1.0, end: 1.05).animate(
+                CurvedAnimation(
+                  parent: _progressController,
+                  curve: Curves.easeInOut,
                 ),
               ),
+              child: _buildFastingButton('$hours-hour fast', () {
+                setState(() {
+                  _selectedFastingGoal = Duration(hours: hours);
+                  _lastMealTime = DateTime.now();
+                  saveLastMealTime(_lastMealTime);
+                  saveSelectedFastingGoal(_selectedFastingGoal);
+                  _startTimer();
+                  _selectRandomQuote();
+                });
+              }),
             );
           }).toList(),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _showCustomFastingDialog,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 40),
-                ),
-                child: const Text('Custom'),
+          ScaleTransition(
+            scale: Tween<double>(begin: 1.0, end: 1.05).animate(
+              CurvedAnimation(
+                parent: _progressController,
+                curve: Curves.easeInOut,
               ),
             ),
+            child: _buildFastingButton('Custom', _showCustomFastingDialog),
           ),
         ],
       ),
@@ -245,7 +287,7 @@ class _FastingScreenState extends State<FastingScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Custom fasting duration'),
+          title: const Text('Custom Fasting Duration'),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -289,7 +331,7 @@ class _FastingScreenState extends State<FastingScreen> {
   Widget _buildFastingContent(bool fastingCompleted, String message) {
     Duration remainingTime = _calculateRemainingTime();
     String remainingTimeStr = formatDuration(
-      remainingTime > Duration.zero ? remainingTime : Duration.zero
+      remainingTime > Duration.zero ? remainingTime : Duration.zero,
     );
 
     double progressValue = 0.0;
@@ -304,46 +346,68 @@ class _FastingScreenState extends State<FastingScreen> {
     Color progressColor = Colors.red;
 
     return Column(
+      key: const ValueKey('fastingContent'),
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Text(
-          remainingTimeStr,
-          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          child: Text(
+            remainingTimeStr,
+            key: ValueKey<String>(remainingTimeStr),
+            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: 10),
-        Text(
-          message,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
+        FadeTransition(
+          opacity: _quoteAnimation,
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 20),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10.0),
-            child: LinearProgressIndicator(
-              value: progressValue,
-              minHeight: 16.0,
-              backgroundColor: backgroundColor,
-              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            child: AnimatedBuilder(
+              animation: _progressController,
+              builder: (context, child) {
+                return LinearProgressIndicator(
+                  value: progressValue,
+                  minHeight: 16.0,
+                  backgroundColor: backgroundColor,
+                  valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                );
+              },
             ),
           ),
         ),
         const SizedBox(height: 20),
         if (fastingCompleted)
-          const Text(
-            'Fasting completed!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
+          FadeTransition(
+            opacity: _quoteAnimation,
+            child: const Text(
+              'Fasting Completed!',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
       ],
     );
