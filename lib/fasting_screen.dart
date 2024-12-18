@@ -19,8 +19,10 @@ class _FastingScreenState extends State<FastingScreen> {
   DateTime? _lastMealTime;
   late Timer _timer;
   Duration _elapsedTime = const Duration(seconds: 0);
+  Duration? _selectedFastingGoal;
   bool _timerRunning = false;
   List<Duration> _fastDurations = [];
+  final List<int> _fastingOptions = [8, 16, 24, 48, 72];
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _FastingScreenState extends State<FastingScreen> {
 
   void _startTimer() {
     if (!mounted) return;
+    _timer.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), _updateElapsedTime);
     setState(() {
       _timerRunning = true;
@@ -52,7 +55,7 @@ class _FastingScreenState extends State<FastingScreen> {
   }
 
   void _updateElapsedTime(Timer timer) {
-    if (_lastMealTime != null && _timerRunning) {
+    if (_lastMealTime != null && _timerRunning && _selectedFastingGoal != null) {
       setState(() {
         _elapsedTime = DateTime.now().difference(_lastMealTime!);
       });
@@ -61,6 +64,8 @@ class _FastingScreenState extends State<FastingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Duration remainingTime = _calculateRemainingTime();
+    bool fastingCompleted = remainingTime <= Duration.zero && _selectedFastingGoal != null;
     String message = calculateMessage(_elapsedTime);
 
     return Scaffold(
@@ -79,58 +84,9 @@ class _FastingScreenState extends State<FastingScreen> {
         ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            if (_lastMealTime == null)
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _lastMealTime = DateTime.now();
-                    _startTimer();
-                    saveLastMealTime(_lastMealTime);
-                  });
-                },
-                child: const Text('Start fasting now'),
-              ),
-            const SizedBox(height: 10),
-            if (_lastMealTime == null)
-              ElevatedButton(
-                onPressed: () => _selectLastMealTime(context),
-                child: const Text('Pick the date and time for your last meal'),
-              ),
-            const SizedBox(height: 20),
-            _lastMealTime != null
-                ? Column(
-                    children: [
-                      const Text(
-                        'Time since your last meal:',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        formatDuration(_elapsedTime),
-                        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        message,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  )
-                : Container(),
-            const SizedBox(height: 20),
-            _fastDurations.isNotEmpty
-                ? _buildLastDurationsList()
-                : Container(),
-          ],
-        ),
+        child: _lastMealTime == null
+            ? _buildFastingOptions()
+            : _buildFastingContent(fastingCompleted, message),
       ),
       bottomNavigationBar: _lastMealTime != null
           ? Container(
@@ -144,6 +100,7 @@ class _FastingScreenState extends State<FastingScreen> {
                     saveFastDurations(_fastDurations);
                     _lastMealTime = null;
                     _elapsedTime = const Duration(seconds: 0);
+                    _selectedFastingGoal = null;
                     _stopTimer();
                   });
                 },
@@ -155,6 +112,84 @@ class _FastingScreenState extends State<FastingScreen> {
             )
           : null,
     );
+  }
+
+  Widget _buildFastingOptions() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Select your fasting duration:',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 20),
+        ..._fastingOptions.map((hours) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedFastingGoal = Duration(hours: hours);
+                  _lastMealTime = DateTime.now();
+                  saveLastMealTime(_lastMealTime);
+                  _startTimer();
+                });
+              },
+              child: Text('$hours-hour fast'),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildFastingContent(bool fastingCompleted, String message) {
+    Duration remainingTime = _calculateRemainingTime();
+    String remainingTimeStr = formatDuration(
+      remainingTime > Duration.zero ? remainingTime : Duration.zero
+    );
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          remainingTimeStr,
+          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          message,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        if (fastingCompleted) ...[
+          const SizedBox(height: 20),
+          const Text(
+            'Fasting completed!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 20),
+        _fastDurations.isNotEmpty ? _buildLastDurationsList() : Container(),
+      ],
+    );
+  }
+
+  Duration _calculateRemainingTime() {
+    if (_lastMealTime == null || _selectedFastingGoal == null) {
+      return Duration.zero;
+    }
+    Duration passed = DateTime.now().difference(_lastMealTime!);
+    return _selectedFastingGoal! - passed;
   }
 
   Widget _buildLastDurationsList() {
@@ -187,48 +222,6 @@ class _FastingScreenState extends State<FastingScreen> {
     );
   }
 
-  Future<void> _selectLastMealTime(BuildContext context) async {
-    if (!mounted) return;
-
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _lastMealTime ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        DateTime selectedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        if (selectedDateTime.isAfter(DateTime.now())) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Please select a date and time before the current time."),
-            ),
-          );
-        } else {
-          setState(() {
-            _lastMealTime = selectedDateTime;
-            saveLastMealTime(_lastMealTime);
-            _startTimer();
-          });
-        }
-      }
-    }
-  }
-
   void _loadLastMealTime() async {
     final time = await loadLastMealTime();
     if (time != null) {
@@ -252,24 +245,26 @@ class _FastingScreenState extends State<FastingScreen> {
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'All Fast Durations',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              ..._fastDurations.map(
-                (duration) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Text(
-                    formatDuration(duration),
-                    style: const TextStyle(fontSize: 16),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'All Fast Durations',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ..._fastDurations.map(
+                  (duration) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Text(
+                      formatDuration(duration),
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
