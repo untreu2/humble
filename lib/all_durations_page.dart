@@ -48,11 +48,11 @@ class _AllDurationsPageState extends State<AllDurationsPage> {
                           content: Text(
                               'Are you sure you want to delete this fasting record? (${formatDuration(_durations[index])})'),
                           actions: [
-                            TextButton(
+                            ElevatedButton(
                               onPressed: () => Navigator.of(context).pop(),
                               child: const Text('Cancel'),
                             ),
-                            TextButton(
+                            ElevatedButton(
                               onPressed: () {
                                 _deleteDuration(index);
                                 Navigator.of(context).pop();

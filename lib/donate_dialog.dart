@@ -30,32 +30,10 @@ class DonateDialog extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          const Row(children: [Expanded(child: Text("On-chain:"))]),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Expanded(
-                  child: SelectableText(
-                      'bc1qr2zfelma4vmsnwhyn88yctfxjtmu2d0xs55eh3')),
-              IconButton(
-                icon: const Icon(Icons.copy),
-                onPressed: () {
-                  Clipboard.setData(
-                      const ClipboardData(text: 'bc1qr2zfelma4vmsnwhyn88yctfxjtmu2d0xs55eh3'))
-                      .then((_) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Copied.')),
-                    );
-                  });
-                },
-              ),
-            ],
-          ),
         ],
       ),
       actions: [
-        TextButton(
+        ElevatedButton(
           onPressed: () {
             Navigator.of(context).pop();
           },

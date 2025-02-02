@@ -36,7 +36,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
-
     _quoteController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -45,12 +44,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
       parent: _quoteController,
       curve: Curves.easeIn,
     );
-
     _progressController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
     _loadData();
     _selectRandomQuote();
   }
@@ -59,7 +56,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     await _loadLastMealTime();
     await _loadFastDurations();
     await _loadSelectedFastingGoal();
-
     if (_lastMealTime != null && _selectedFastingGoal != null) {
       _startTimer();
     }
@@ -107,15 +103,220 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     }
   }
 
+  Duration _calculateRemainingTime() {
+    if (_lastMealTime == null || _selectedFastingGoal == null) {
+      return Duration.zero;
+    }
+    Duration passed = DateTime.now().difference(_lastMealTime!);
+    return _selectedFastingGoal! - passed;
+  }
+
+  Future<void> _loadLastMealTime() async {
+    final time = await loadLastMealTime();
+    if (time != null) {
+      setState(() {
+        _lastMealTime = time;
+      });
+    }
+  }
+
+  Future<void> _loadSelectedFastingGoal() async {
+    final goal = await loadSelectedFastingGoal();
+    if (goal != null) {
+      setState(() {
+        _selectedFastingGoal = goal;
+      });
+    }
+  }
+
+  Future<void> _loadFastDurations() async {
+    final durations = await loadFastDurations();
+    setState(() {
+      _fastDurations = durations;
+    });
+  }
+
+  Future<void> _showCustomFastingDialog() async {
+    final TextEditingController controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Custom Fasting Duration'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Enter fasting duration in hours',
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final input = controller.text;
+                if (input.isNotEmpty) {
+                  final hours = int.tryParse(input);
+                  if (hours != null && hours > 0) {
+                    setState(() {
+                      _selectedFastingGoal = Duration(hours: hours);
+                      _lastMealTime = DateTime.now();
+                      saveLastMealTime(_lastMealTime);
+                      saveSelectedFastingGoal(_selectedFastingGoal);
+                      _startTimer();
+                      _selectRandomQuote();
+                    });
+                  }
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Start'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDonateDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return const DonateDialog();
+      },
+    );
+  }
+
+  Widget _buildFastingButton(String text, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 40),
+        ),
+        child: Text(text),
+      ),
+    );
+  }
+
+  Widget _buildFastingOptions() {
+    return Padding(
+      key: const ValueKey('fastingOptions'),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ..._fastingOptions.map((hours) {
+            return ScaleTransition(
+              scale: Tween<double>(begin: 1.0, end: 1.05).animate(
+                CurvedAnimation(
+                  parent: _progressController,
+                  curve: Curves.easeInOut,
+                ),
+              ),
+              child: _buildFastingButton('$hours-hour fast', () {
+                setState(() {
+                  _selectedFastingGoal = Duration(hours: hours);
+                  _lastMealTime = DateTime.now();
+                  saveLastMealTime(_lastMealTime);
+                  saveSelectedFastingGoal(_selectedFastingGoal);
+                  _startTimer();
+                  _selectRandomQuote();
+                });
+              }),
+            );
+          }).toList(),
+          ScaleTransition(
+            scale: Tween<double>(begin: 1.0, end: 1.05).animate(
+              CurvedAnimation(
+                parent: _progressController,
+                curve: Curves.easeInOut,
+              ),
+            ),
+            child: _buildFastingButton('Custom', _showCustomFastingDialog),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFastingContent(bool fastingCompleted, String message) {
+    Duration remainingTime = _calculateRemainingTime();
+    String remainingTimeStr = formatDuration(
+      remainingTime > Duration.zero ? remainingTime : Duration.zero,
+    );
+    double progressValue = 0.0;
+    if (_selectedFastingGoal != null && _selectedFastingGoal!.inSeconds > 0) {
+      final elapsedSeconds = _elapsedTime.inSeconds;
+      final goalSeconds = _selectedFastingGoal!.inSeconds;
+      progressValue = (elapsedSeconds / goalSeconds).clamp(0.0, 1.0);
+    }
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    Color circleBackgroundColor = isDarkMode ? Colors.grey[800]! : Colors.grey[300]!;
+    Color progressColor = Colors.redAccent;
+    return Column(
+      key: const ValueKey('fastingContent'),
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const SizedBox(height: 75),
+        CircularCountdownTimer(
+          progress: progressValue,
+          remainingTime: remainingTimeStr,
+          progressColor: progressColor,
+          backgroundColor: circleBackgroundColor,
+          size: 350,
+        ),
+        const SizedBox(height: 20),
+        FadeTransition(
+          opacity: _quoteAnimation,
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (fastingCompleted)
+          FadeTransition(
+            opacity: _quoteAnimation,
+            child: const Text(
+              'Fasting Completed!',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Duration remainingTime = _calculateRemainingTime();
     bool fastingCompleted = remainingTime <= Duration.zero && _selectedFastingGoal != null;
     String message = calculateMessage(_elapsedTime);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Humble'),
+        title: const Text(
+          'Humble',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.favorite),
@@ -150,7 +351,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
               child: Container(
                 height: 150,
                 width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
                 child: _randomQuote != null
                     ? SingleChildScrollView(
                         child: Column(
@@ -219,239 +419,91 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                child: const Text("End Fasting"),
+                child: const Text("End fasting"),
               ),
             )
           : null,
     );
   }
+}
 
-  Widget _buildFastingButton(String text, VoidCallback onPressed) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 40),
+class CircularCountdownTimer extends StatelessWidget {
+  final double progress;
+  final String remainingTime;
+  final Color progressColor;
+  final Color backgroundColor;
+  final double size;
+
+  const CircularCountdownTimer({
+    Key? key,
+    required this.progress,
+    required this.remainingTime,
+    required this.progressColor,
+    required this.backgroundColor,
+    this.size = 200,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _CircularCountdownPainter(
+          progress: progress,
+          progressColor: progressColor,
+          backgroundColor: backgroundColor,
         ),
-        child: Text(text),
-      ),
-    );
-  }
-
-  Widget _buildFastingOptions() {
-    return Padding(
-      key: const ValueKey('fastingOptions'),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ..._fastingOptions.map((hours) {
-            return ScaleTransition(
-              scale: Tween<double>(begin: 1.0, end: 1.05).animate(
-                CurvedAnimation(
-                  parent: _progressController,
-                  curve: Curves.easeInOut,
-                ),
-              ),
-              child: _buildFastingButton('$hours-hour fast', () {
-                setState(() {
-                  _selectedFastingGoal = Duration(hours: hours);
-                  _lastMealTime = DateTime.now();
-                  saveLastMealTime(_lastMealTime);
-                  saveSelectedFastingGoal(_selectedFastingGoal);
-                  _startTimer();
-                  _selectRandomQuote();
-                });
-              }),
-            );
-          }).toList(),
-          ScaleTransition(
-            scale: Tween<double>(begin: 1.0, end: 1.05).animate(
-              CurvedAnimation(
-                parent: _progressController,
-                curve: Curves.easeInOut,
-              ),
-            ),
-            child: _buildFastingButton('Custom', _showCustomFastingDialog),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showCustomFastingDialog() async {
-    final TextEditingController controller = TextEditingController();
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Custom Fasting Duration'),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Enter fasting duration in hours',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                final input = controller.text;
-                if (input.isNotEmpty) {
-                  final hours = int.tryParse(input);
-                  if (hours != null && hours > 0) {
-                    setState(() {
-                      _selectedFastingGoal = Duration(hours: hours);
-                      _lastMealTime = DateTime.now();
-                      saveLastMealTime(_lastMealTime);
-                      saveSelectedFastingGoal(_selectedFastingGoal);
-                      _startTimer();
-                      _selectRandomQuote();
-                    });
-                  }
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('Start'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildFastingContent(bool fastingCompleted, String message) {
-    Duration remainingTime = _calculateRemainingTime();
-    String remainingTimeStr = formatDuration(
-      remainingTime > Duration.zero ? remainingTime : Duration.zero,
-    );
-
-    double progressValue = 0.0;
-    if (_selectedFastingGoal != null && _selectedFastingGoal!.inSeconds > 0) {
-      final elapsedSeconds = _elapsedTime.inSeconds;
-      final goalSeconds = _selectedFastingGoal!.inSeconds;
-      progressValue = (elapsedSeconds / goalSeconds).clamp(0.0, 1.0);
-    }
-
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    Color backgroundColor = isDarkMode ? Colors.white : Colors.black;
-    Color progressColor = Colors.red;
-
-    return Column(
-      key: const ValueKey('fastingContent'),
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
+        child: Center(
           child: Text(
-            remainingTimeStr,
-            key: ValueKey<String>(remainingTimeStr),
-            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 10),
-        FadeTransition(
-          opacity: _quoteAnimation,
-          child: Text(
-            message,
+            remainingTime,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10.0),
-            child: AnimatedBuilder(
-              animation: _progressController,
-              builder: (context, child) {
-                return LinearProgressIndicator(
-                  value: progressValue,
-                  minHeight: 16.0,
-                  backgroundColor: backgroundColor,
-                  valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-                );
-              },
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        if (fastingCompleted)
-          FadeTransition(
-            opacity: _quoteAnimation,
-            child: const Text(
-              'Fasting Completed!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-      ],
+      ),
+    );
+  }
+}
+
+class _CircularCountdownPainter extends CustomPainter {
+  final double progress;
+  final Color progressColor;
+  final Color backgroundColor;
+
+  _CircularCountdownPainter({
+    required this.progress,
+    required this.progressColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double strokeWidth = 12;
+    double radius = (size.width / 2) - strokeWidth;
+    Offset center = Offset(size.width / 2, size.height / 2);
+    Paint bgPaint = Paint()
+      ..color = backgroundColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+    Paint progressPaint = Paint()
+      ..color = progressColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, bgPaint);
+    double sweepAngle = 2 * pi * progress;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      sweepAngle,
+      false,
+      progressPaint,
     );
   }
 
-  Duration _calculateRemainingTime() {
-    if (_lastMealTime == null || _selectedFastingGoal == null) {
-      return Duration.zero;
-    }
-    Duration passed = DateTime.now().difference(_lastMealTime!);
-    return _selectedFastingGoal! - passed;
-  }
-
-  Future<void> _loadLastMealTime() async {
-    final time = await loadLastMealTime();
-    if (time != null) {
-      setState(() {
-        _lastMealTime = time;
-      });
-    }
-  }
-
-  Future<void> _loadSelectedFastingGoal() async {
-    final goal = await loadSelectedFastingGoal();
-    if (goal != null) {
-      setState(() {
-        _selectedFastingGoal = goal;
-      });
-    }
-  }
-
-  Future<void> _loadFastDurations() async {
-    final durations = await loadFastDurations();
-    setState(() {
-      _fastDurations = durations;
-    });
-  }
-
-  void _showDonateDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return const DonateDialog();
-      },
-    );
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
