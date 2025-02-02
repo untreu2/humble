@@ -258,20 +258,30 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
       final goalSeconds = _selectedFastingGoal!.inSeconds;
       progressValue = (elapsedSeconds / goalSeconds).clamp(0.0, 1.0);
     }
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    Color circleBackgroundColor = isDarkMode ? Colors.grey[800]! : Colors.grey[300]!;
-    Color progressColor = Colors.redAccent;
     return Column(
       key: const ValueKey('fastingContent'),
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         const SizedBox(height: 75),
-        CircularCountdownTimer(
-          progress: progressValue,
-          remainingTime: remainingTimeStr,
-          progressColor: progressColor,
-          backgroundColor: circleBackgroundColor,
-          size: 350,
+        Text(
+          remainingTimeStr,
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: 12,
+              backgroundColor: Colors.grey[300],
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.redAccent),
+            ),
+          ),
         ),
         const SizedBox(height: 20),
         FadeTransition(
@@ -353,27 +363,30 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                 width: double.infinity,
                 child: _randomQuote != null
                     ? SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              '"${_randomQuote!.text}"',
-                              style: const TextStyle(
-                                fontStyle: FontStyle.italic,
-                                fontSize: 16,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                '"${_randomQuote!.text}"',
+                                style: const TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Text(
-                              '- ${_randomQuote!.author}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                              const SizedBox(height: 8.0),
+                              Text(
+                                '- ${_randomQuote!.author}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       )
                     : Container(),
@@ -383,11 +396,22 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           Center(
             child: SingleChildScrollView(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 700),
                 transitionBuilder: (Widget child, Animation<double> animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: child,
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.0, 1.0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
                   );
                 },
                 child: _lastMealTime == null
@@ -401,7 +425,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
       bottomNavigationBar: _lastMealTime != null
           ? Container(
               width: double.infinity,
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 35.0),
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 45.0),
               child: ElevatedButton(
                 onPressed: () {
                   setState(() {
@@ -425,85 +449,4 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           : null,
     );
   }
-}
-
-class CircularCountdownTimer extends StatelessWidget {
-  final double progress;
-  final String remainingTime;
-  final Color progressColor;
-  final Color backgroundColor;
-  final double size;
-
-  const CircularCountdownTimer({
-    Key? key,
-    required this.progress,
-    required this.remainingTime,
-    required this.progressColor,
-    required this.backgroundColor,
-    this.size = 200,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _CircularCountdownPainter(
-          progress: progress,
-          progressColor: progressColor,
-          backgroundColor: backgroundColor,
-        ),
-        child: Center(
-          child: Text(
-            remainingTime,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CircularCountdownPainter extends CustomPainter {
-  final double progress;
-  final Color progressColor;
-  final Color backgroundColor;
-
-  _CircularCountdownPainter({
-    required this.progress,
-    required this.progressColor,
-    required this.backgroundColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    double strokeWidth = 12;
-    double radius = (size.width / 2) - strokeWidth;
-    Offset center = Offset(size.width / 2, size.height / 2);
-    Paint bgPaint = Paint()
-      ..color = backgroundColor
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-    Paint progressPaint = Paint()
-      ..color = progressColor
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, bgPaint);
-    double sweepAngle = 2 * pi * progress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
