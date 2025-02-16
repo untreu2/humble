@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import 'format_utils.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
@@ -12,13 +12,15 @@ import 'quotes.dart';
 class FastingScreen extends StatefulWidget {
   final VoidCallback toggleDarkMode;
 
-  const FastingScreen({Key? key, required this.toggleDarkMode}) : super(key: key);
+  const FastingScreen({Key? key, required this.toggleDarkMode})
+      : super(key: key);
 
   @override
   _FastingScreenState createState() => _FastingScreenState();
 }
 
-class _FastingScreenState extends State<FastingScreen> with TickerProviderStateMixin {
+class _FastingScreenState extends State<FastingScreen>
+    with TickerProviderStateMixin {
   DateTime? _lastMealTime;
   Timer? _timer;
   Duration _elapsedTime = const Duration(seconds: 0);
@@ -26,9 +28,8 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   bool _timerRunning = false;
   List<Duration> _fastDurations = [];
   final List<int> _fastingOptions = [8, 16, 24, 48, 72];
-
+  int _selectedFastingIndex = 0;
   Quote? _randomQuote;
-
   late AnimationController _quoteController;
   late Animation<double> _quoteAnimation;
   late AnimationController _progressController;
@@ -37,15 +38,15 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   void initState() {
     super.initState();
     _quoteController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _quoteAnimation = CurvedAnimation(
       parent: _quoteController,
-      curve: Curves.easeIn,
+      curve: Curves.easeOut,
     );
     _progressController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _loadData();
@@ -95,7 +96,9 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   }
 
   void _updateElapsedTime(Timer timer) {
-    if (_lastMealTime != null && _timerRunning && _selectedFastingGoal != null) {
+    if (_lastMealTime != null &&
+        _timerRunning &&
+        _selectedFastingGoal != null) {
       setState(() {
         _elapsedTime = DateTime.now().difference(_lastMealTime!);
         _progressController.forward(from: 0.0);
@@ -192,58 +195,42 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildFastingButton(String text, VoidCallback onPressed) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 40),
-        ),
-        child: Text(text),
-      ),
-    );
-  }
-
   Widget _buildFastingOptions() {
-    return Padding(
-      key: const ValueKey('fastingOptions'),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ..._fastingOptions.map((hours) {
-            return ScaleTransition(
-              scale: Tween<double>(begin: 1.0, end: 1.05).animate(
-                CurvedAnimation(
-                  parent: _progressController,
-                  curve: Curves.easeInOut,
-                ),
-              ),
-              child: _buildFastingButton('$hours-hour fast', () {
-                setState(() {
-                  _selectedFastingGoal = Duration(hours: hours);
-                  _lastMealTime = DateTime.now();
-                  saveLastMealTime(_lastMealTime);
-                  saveSelectedFastingGoal(_selectedFastingGoal);
-                  _startTimer();
-                  _selectRandomQuote();
-                });
-              }),
-            );
-          }).toList(),
-          ScaleTransition(
-            scale: Tween<double>(begin: 1.0, end: 1.05).animate(
-              CurvedAnimation(
-                parent: _progressController,
-                curve: Curves.easeInOut,
-              ),
-            ),
-            child: _buildFastingButton('Custom', _showCustomFastingDialog),
+    final List<Widget> pickerItems = [
+      for (int hours in _fastingOptions)
+        Center(
+          child: Text(
+            '$hours-hour fast',
+            style: const TextStyle(fontSize: 22),
           ),
-        ],
+        ),
+      const Center(
+        child: Text(
+          'Custom',
+          style: TextStyle(fontSize: 22),
+        ),
       ),
+    ];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 150,
+          child: CupertinoPicker(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            itemExtent: 40,
+            scrollController:
+                FixedExtentScrollController(initialItem: _selectedFastingIndex),
+            onSelectedItemChanged: (int index) {
+              setState(() {
+                _selectedFastingIndex = index;
+              });
+            },
+            children: pickerItems,
+          ),
+        ),
+      ],
     );
   }
 
@@ -314,11 +301,62 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     );
   }
 
+  Widget _buildActionButton() {
+    final bool fastingActive = _lastMealTime != null;
+    return ElevatedButton(
+      onPressed: () {
+        if (!fastingActive) {
+          if (_selectedFastingIndex < _fastingOptions.length) {
+            setState(() {
+              int hours = _fastingOptions[_selectedFastingIndex];
+              _selectedFastingGoal = Duration(hours: hours);
+              _lastMealTime = DateTime.now();
+              saveLastMealTime(_lastMealTime);
+              saveSelectedFastingGoal(_selectedFastingGoal);
+              _startTimer();
+              _selectRandomQuote();
+            });
+          } else {
+            _showCustomFastingDialog();
+          }
+        } else {
+          setState(() {
+            saveLastMealTime(null);
+            saveSelectedFastingGoal(null);
+            _fastDurations.insert(0, _elapsedTime);
+            saveFastDurations(_fastDurations);
+            _lastMealTime = null;
+            _elapsedTime = const Duration(seconds: 0);
+            _selectedFastingGoal = null;
+            _stopTimer();
+            _selectRandomQuote();
+          });
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 50),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      child: Text(fastingActive ? 'End fasting' : 'Start fasting'),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Duration remainingTime = _calculateRemainingTime();
-    bool fastingCompleted = remainingTime <= Duration.zero && _selectedFastingGoal != null;
+    bool fastingCompleted =
+        remainingTime <= Duration.zero && _selectedFastingGoal != null;
     String message = calculateMessage(_elapsedTime);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -339,7 +377,8 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AllDurationsPage(durations: _fastDurations),
+                  builder: (context) =>
+                      AllDurationsPage(durations: _fastDurations),
                 ),
               );
             },
@@ -396,20 +435,13 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           Center(
             child: SingleChildScrollView(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 700),
+                duration: const Duration(milliseconds: 500),
                 transitionBuilder: (Widget child, Animation<double> animation) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.0, 1.0),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                    child: FadeTransition(
-                      opacity: animation,
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 1.0, end: 1.0)
+                          .animate(animation),
                       child: child,
                     ),
                   );
@@ -422,31 +454,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           ),
         ],
       ),
-      bottomNavigationBar: _lastMealTime != null
-          ? Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 45.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    saveLastMealTime(null);
-                    saveSelectedFastingGoal(null);
-                    _fastDurations.insert(0, _elapsedTime);
-                    saveFastDurations(_fastDurations);
-                    _lastMealTime = null;
-                    _elapsedTime = const Duration(seconds: 0);
-                    _selectedFastingGoal = null;
-                    _stopTimer();
-                    _selectRandomQuote();
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: const Text("End fasting"),
-              ),
-            )
-          : null,
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 45.0),
+        child: _buildActionButton(),
+      ),
     );
   }
 }
