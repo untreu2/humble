@@ -18,6 +18,7 @@ class _DonateDialogState extends State<DonateDialog> {
       setState(() {
         _copied = true;
       });
+
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() {
@@ -31,55 +32,52 @@ class _DonateDialogState extends State<DonateDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Center(child: Text('Donate')),
+      title: const Text(
+        'Donate via Lightning',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
       content: SizedBox(
         width: 300,
-        height: 150,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        height: 50,
+        child: Row(
           children: [
-            const Text('Lightning:'),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: _copied
-                        ? Row(
-                            key: const ValueKey('copied'),
-                            children: const [
-                              Icon(Icons.check, color: Colors.green),
-                              SizedBox(width: 4),
-                              Text('Copied!'),
-                            ],
-                          )
-                        : const Text(
-                            'untreu@walletofsatoshi.com',
-                            key: ValueKey('address'),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: _copied
+                    ? Row(
+                        key: const ValueKey('copied'),
+                        children: const [
+                          Icon(Icons.check, color: Colors.green),
+                          SizedBox(width: 6),
+                          Text(
+                            'Copied!',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy),
-                  onPressed: _copyAddress,
-                ),
-              ],
+                        ],
+                      )
+                    : const Text(
+                        'untreu@walletofsatoshi.com',
+                        key: ValueKey('address'),
+                        style: TextStyle(fontSize: 14),
+                      ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.copy),
+              tooltip: 'Copy address',
+              onPressed: _copyAddress,
             ),
           ],
         ),
       ),
-      actions: [
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Center(child: Text('Close')),
-        ),
-      ],
     );
   }
 }

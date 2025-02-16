@@ -140,44 +140,37 @@ class _FastingScreenState extends State<FastingScreen>
 
   Future<void> _showCustomFastingDialog() async {
     final TextEditingController controller = TextEditingController();
+
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Custom Fasting Duration'),
           content: TextField(
+            autofocus: true,
             controller: controller,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
-              labelText: 'Enter fasting duration in hours',
+              labelText: 'Enter fasting duration (hours)',
             ),
           ),
           actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final input = controller.text;
-                if (input.isNotEmpty) {
-                  final hours = int.tryParse(input);
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  final hours = int.tryParse(controller.text);
                   if (hours != null && hours > 0) {
-                    setState(() {
-                      _selectedFastingGoal = Duration(hours: hours);
-                      _lastMealTime = DateTime.now();
-                      saveLastMealTime(_lastMealTime);
-                      saveSelectedFastingGoal(_selectedFastingGoal);
-                      _startTimer();
-                      _selectRandomQuote();
-                    });
+                    _selectedFastingGoal = Duration(hours: hours);
+                    _lastMealTime = DateTime.now();
+                    saveLastMealTime(_lastMealTime);
+                    saveSelectedFastingGoal(_selectedFastingGoal);
+                    _startTimer();
+                    _selectRandomQuote();
                   }
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('Start'),
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Start'),
+              ),
             ),
           ],
         );
