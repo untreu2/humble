@@ -6,7 +6,6 @@ import 'format_utils.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
-import 'all_durations_page.dart';
 import 'quotes.dart';
 
 class FastingScreen extends StatefulWidget {
@@ -371,18 +370,6 @@ class _FastingScreenState extends State<FastingScreen>
           onPressed: _showDonateDialog,
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AllDurationsPage(durations: _fastDurations),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.lightbulb),
             onPressed: widget.toggleDarkMode,
