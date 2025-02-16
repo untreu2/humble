@@ -145,12 +145,24 @@ class _FastingScreenState extends State<FastingScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           content: TextField(
             autofocus: true,
             controller: controller,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Enter fasting duration (hours)',
+              labelStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           actions: [
@@ -169,7 +181,18 @@ class _FastingScreenState extends State<FastingScreen>
                   }
                   Navigator.of(context).pop();
                 },
-                child: const Text('Start'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Start fasting'),
               ),
             ),
           ],
