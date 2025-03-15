@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
@@ -140,62 +141,85 @@ class _FastingScreenState extends State<FastingScreen>
 
   Future<void> _showCustomFastingDialog() async {
     final TextEditingController controller = TextEditingController();
+    String? errorMessage;
 
     await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          content: TextField(
-            autofocus: true,
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Enter fasting duration (hours)',
-              labelStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  final hours = int.tryParse(controller.text);
-                  if (hours != null && hours > 0) {
-                    _selectedFastingGoal = Duration(hours: hours);
-                    _lastMealTime = DateTime.now();
-                    saveLastMealTime(_lastMealTime);
-                    saveSelectedFastingGoal(_selectedFastingGoal);
-                    _startTimer();
-                    _selectRandomQuote();
-                  }
-                  Navigator.of(context).pop();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    autofocus: true,
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: 'Enter fasting duration (hours)',
+                      labelStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 8.0),
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final hours = int.tryParse(controller.text);
+                      if (hours != null && hours >= 1 && hours <= 1000) {
+                        _selectedFastingGoal = Duration(hours: hours);
+                        _lastMealTime = DateTime.now();
+                        saveLastMealTime(_lastMealTime);
+                        saveSelectedFastingGoal(_selectedFastingGoal);
+                        _startTimer();
+                        _selectRandomQuote();
+                        Navigator.of(context).pop();
+                      } else {
+                        setState(() {
+                          errorMessage =
+                              'Please enter a valid number between 1 and 1000.';
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('Start fasting'),
                   ),
                 ),
-                child: const Text('Start fasting'),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
