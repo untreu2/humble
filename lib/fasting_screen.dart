@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'format_utils.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
@@ -249,11 +248,98 @@ class _FastingScreenState extends State<FastingScreen>
     );
   }
 
+  Widget _buildProgressBar(double progressValue) {
+    const double barWidth = 300.0;
+    final theme = Theme.of(context);
+    return Center(
+      child: Container(
+        width: barWidth,
+        height: 12,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border.all(
+            color: theme.dividerColor,
+            width: 2.0,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Stack(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 500),
+              width: barWidth * progressValue,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.7),
+                    theme.colorScheme.primary,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeDisplay(Duration duration) {
+    int hours = duration.inHours;
+    int minutes = duration.inMinutes.remainder(60);
+    int seconds = duration.inSeconds.remainder(60);
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          '$hours',
+          style: TextStyle(
+            fontSize: 80,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        Text(
+          ':',
+          style: TextStyle(
+            fontSize: 80,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        Text(
+          '$minutes',
+          style: TextStyle(
+            fontSize: 60,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        Text(
+          ':',
+          style: TextStyle(
+            fontSize: 60,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        Text(
+          '$seconds',
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFastingContent(bool fastingCompleted, String message) {
     Duration remainingTime = _calculateRemainingTime();
-    String remainingTimeStr = formatDuration(
-      remainingTime > Duration.zero ? remainingTime : Duration.zero,
-    );
     double progressValue = 0.0;
     if (_selectedFastingGoal != null && _selectedFastingGoal!.inSeconds > 0) {
       final elapsedSeconds = _elapsedTime.inSeconds;
@@ -265,44 +351,10 @@ class _FastingScreenState extends State<FastingScreen>
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         const SizedBox(height: 75),
-        Text(
-          remainingTimeStr,
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        _buildTimeDisplay(
+            remainingTime > Duration.zero ? remainingTime : Duration.zero),
         const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Stack(
-            children: [
-              Container(
-                height: 12,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                    width: 2.0,
-                  ),
-                ),
-              ),
-              FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progressValue,
-                child: Container(
-                  height: 12,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        _buildProgressBar(progressValue),
         const SizedBox(height: 20),
         FadeTransition(
           opacity: _quoteAnimation,
