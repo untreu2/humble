@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
@@ -294,45 +295,50 @@ class _FastingScreenState extends State<FastingScreen>
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Text(
+        AutoSizeText(
           '$hours',
           style: TextStyle(
             fontSize: 80,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
           ),
+          maxLines: 1,
         ),
-        Text(
+        AutoSizeText(
           ':',
           style: TextStyle(
             fontSize: 80,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
           ),
+          maxLines: 1,
         ),
-        Text(
+        AutoSizeText(
           '$minutes',
           style: TextStyle(
             fontSize: 60,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
           ),
+          maxLines: 1,
         ),
-        Text(
+        AutoSizeText(
           ':',
           style: TextStyle(
             fontSize: 60,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
           ),
+          maxLines: 1,
         ),
-        Text(
+        AutoSizeText(
           '$seconds',
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
           ),
+          maxLines: 1,
         ),
       ],
     );
