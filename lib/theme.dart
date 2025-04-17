@@ -24,16 +24,16 @@ ThemeData buildLightTheme() {
 
 ThemeData buildDarkTheme() {
   return ThemeData.dark().copyWith(
-    scaffoldBackgroundColor: const Color(0xFF1D2021),
+    scaffoldBackgroundColor: const Color(0xFF282828),
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFFBDAE93),
       secondary: Color(0xFF665C54),
-      surface: Color(0xFF1D2021),
+      surface: Color(0xFF282828),
       error: Color(0xFFFB4934),
-      onPrimary: Color(0xFF1D2021),
+      onPrimary: Color(0xFF282828),
       onSecondary: Color(0xFFD5C4A1),
       onSurface: Color(0xFFD5C4A1),
-      onError: Color(0xFF1D2021),
+      onError: Color(0xFF282828),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
