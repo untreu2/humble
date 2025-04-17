@@ -276,36 +276,50 @@ class _FastingScreenState extends State<FastingScreen>
   Widget _buildProgressBar(double progressValue) {
     const double barWidth = 300.0;
     final theme = Theme.of(context);
-    return Center(
-      child: Container(
-        width: barWidth,
-        height: 12,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          border: Border.all(
-            color: theme.dividerColor,
-            width: 2.0,
-          ),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Stack(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 500),
-              width: barWidth * progressValue,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary.withOpacity(0.7),
-                    theme.colorScheme.primary,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
+    final goalHours = _selectedFastingGoal?.inHours ?? 0;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: barWidth,
+          height: 12,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border.all(
+              color: theme.dividerColor,
+              width: 2.0,
             ),
-          ],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Stack(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                width: barWidth * progressValue,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.7),
+                      theme.colorScheme.primary,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(width: 12),
+        Text(
+          '${goalHours}h',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+            fontSize: 16,
+          ),
+        ),
+      ],
     );
   }
 
