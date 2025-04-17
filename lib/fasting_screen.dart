@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
@@ -310,59 +309,31 @@ class _FastingScreenState extends State<FastingScreen>
   }
 
   Widget _buildTimeDisplay(Duration duration) {
-    int hours = duration.inHours;
-    int minutes = duration.inMinutes.remainder(60);
-    int seconds = duration.inSeconds.remainder(60);
     final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+    final int hours = duration.inHours;
+    final int minutes = duration.inMinutes.remainder(60);
+
+    final baseStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      color: theme.colorScheme.onSurface,
+    );
+
+    String pluralize(int value, String unit) {
+      return '$value $unit${value == 1 ? '' : 's'}';
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        AutoSizeText(
-          '$hours',
-          style: TextStyle(
-            fontSize: 80,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-          maxLines: 1,
+        Text(
+          pluralize(hours, 'hour'),
+          style: baseStyle.copyWith(fontSize: 60),
         ),
-        AutoSizeText(
-          ':',
-          style: TextStyle(
-            fontSize: 80,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-          maxLines: 1,
-        ),
-        AutoSizeText(
-          '$minutes',
-          style: TextStyle(
-            fontSize: 60,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-          maxLines: 1,
-        ),
-        AutoSizeText(
-          ':',
-          style: TextStyle(
-            fontSize: 60,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-          maxLines: 1,
-        ),
-        AutoSizeText(
-          '$seconds',
-          style: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-          maxLines: 1,
+        const SizedBox(height: 8),
+        Text(
+          pluralize(minutes, 'minute'),
+          style: baseStyle.copyWith(fontSize: 32),
         ),
       ],
     );
