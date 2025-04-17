@@ -32,10 +32,14 @@ class _DonateDialogState extends State<DonateDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(
+      title: Text(
         'Donate via Lightning',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
       content: SizedBox(
         width: 300,
@@ -51,13 +55,14 @@ class _DonateDialogState extends State<DonateDialog> {
                 child: _copied
                     ? Row(
                         key: const ValueKey('copied'),
-                        children: const [
-                          Icon(Icons.check, color: Colors.green),
-                          SizedBox(width: 6),
+                        children: [
+                          Icon(Icons.check,
+                              color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 6),
                           Text(
                             'Copied!',
                             style: TextStyle(
-                              color: Colors.green,
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
