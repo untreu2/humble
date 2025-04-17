@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shimmer/shimmer.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
@@ -357,14 +358,15 @@ class _FastingScreenState extends State<FastingScreen>
         const SizedBox(height: 20),
         _buildProgressBar(progressValue),
         const SizedBox(height: 20),
-        FadeTransition(
-          opacity: _quoteAnimation,
+        Shimmer.fromColors(
+          period: const Duration(seconds: 2),
+          baseColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          highlightColor: Theme.of(context).colorScheme.onSurface,
           child: Text(
             message,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
             ),
             textAlign: TextAlign.center,
           ),
