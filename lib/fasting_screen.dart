@@ -12,15 +12,13 @@ import 'quotes.dart';
 class FastingScreen extends StatefulWidget {
   final VoidCallback toggleDarkMode;
 
-  const FastingScreen({Key? key, required this.toggleDarkMode})
-      : super(key: key);
+  const FastingScreen({Key? key, required this.toggleDarkMode}) : super(key: key);
 
   @override
   _FastingScreenState createState() => _FastingScreenState();
 }
 
-class _FastingScreenState extends State<FastingScreen>
-    with TickerProviderStateMixin {
+class _FastingScreenState extends State<FastingScreen> with TickerProviderStateMixin {
   DateTime? _lastMealTime;
   Timer? _timer;
   Duration _elapsedTime = const Duration(seconds: 0);
@@ -96,9 +94,7 @@ class _FastingScreenState extends State<FastingScreen>
   }
 
   void _updateElapsedTime(Timer timer) {
-    if (_lastMealTime != null &&
-        _timerRunning &&
-        _selectedFastingGoal != null) {
+    if (_lastMealTime != null && _timerRunning && _selectedFastingGoal != null) {
       setState(() {
         _elapsedTime = DateTime.now().difference(_lastMealTime!);
         _progressController.forward(from: 0.0);
@@ -198,8 +194,7 @@ class _FastingScreenState extends State<FastingScreen>
                         Navigator.of(context).pop();
                       } else {
                         setState(() {
-                          errorMessage =
-                              'Please enter a valid number between 1 and 1000.';
+                          errorMessage = 'Please enter a valid number between 1 and 1000.';
                         });
                       }
                     },
@@ -259,8 +254,7 @@ class _FastingScreenState extends State<FastingScreen>
           child: CupertinoPicker(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             itemExtent: 40,
-            scrollController:
-                FixedExtentScrollController(initialItem: _selectedFastingIndex),
+            scrollController: FixedExtentScrollController(initialItem: _selectedFastingIndex),
             onSelectedItemChanged: (int index) {
               setState(() {
                 _selectedFastingIndex = index;
@@ -367,8 +361,7 @@ class _FastingScreenState extends State<FastingScreen>
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         const SizedBox(height: 75),
-        _buildTimeDisplay(
-            remainingTime > Duration.zero ? remainingTime : Duration.zero),
+        _buildTimeDisplay(remainingTime > Duration.zero ? remainingTime : Duration.zero),
         const SizedBox(height: 20),
         _buildProgressBar(progressValue),
         const SizedBox(height: 20),
@@ -441,7 +434,7 @@ class _FastingScreenState extends State<FastingScreen>
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         textStyle: const TextStyle(
           fontSize: 16,
@@ -455,8 +448,7 @@ class _FastingScreenState extends State<FastingScreen>
   @override
   Widget build(BuildContext context) {
     Duration remainingTime = _calculateRemainingTime();
-    bool fastingCompleted =
-        remainingTime <= Duration.zero && _selectedFastingGoal != null;
+    bool fastingCompleted = remainingTime <= Duration.zero && _selectedFastingGoal != null;
     String message = calculateMessage(_elapsedTime);
 
     return Scaffold(
@@ -530,15 +522,12 @@ class _FastingScreenState extends State<FastingScreen>
                   return FadeTransition(
                     opacity: animation,
                     child: ScaleTransition(
-                      scale: Tween<double>(begin: 1.0, end: 1.0)
-                          .animate(animation),
+                      scale: Tween<double>(begin: 1.0, end: 1.0).animate(animation),
                       child: child,
                     ),
                   );
                 },
-                child: _lastMealTime == null
-                    ? _buildFastingOptions()
-                    : _buildFastingContent(fastingCompleted, message),
+                child: _lastMealTime == null ? _buildFastingOptions() : _buildFastingContent(fastingCompleted, message),
               ),
             ),
           ),
