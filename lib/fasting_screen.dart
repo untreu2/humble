@@ -496,6 +496,61 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     );
   }
 
+  Widget _buildCompletionScreen() {
+    return Stack(
+      children: [
+        Positioned(
+          top: 210,
+          left: 0,
+          right: 0,
+          child: Text(
+            'Congrats!',
+            style: GoogleFonts.baskervville(
+              fontSize: 72,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Positioned(
+          bottom: 20,
+          left: 16,
+          right: 16,
+          child: ElevatedButton(
+            onPressed: () {
+              setState(() {
+                saveLastMealTime(null);
+                saveSelectedFastingGoal(null);
+                _fastDurations.insert(0, _elapsedTime);
+                saveFastDurations(_fastDurations);
+                _lastMealTime = null;
+                _elapsedTime = const Duration(seconds: 0);
+                _selectedFastingGoal = null;
+              });
+              _stopTimer();
+              _selectRandomQuote();
+            },
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 100),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+              elevation: 0,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(50),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Just do it again'),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildActionButton() {
     final bool fastingActive = _lastMealTime != null;
     return ElevatedButton(
@@ -556,117 +611,122 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
       body: Stack(
         children: [
           if (fastingActive) _buildWaves(),
-          SafeArea(
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  right: 20,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Humble',
-                        style: GoogleFonts.baskervville(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
+          if (fastingCompleted)
+            SafeArea(
+              child: _buildCompletionScreen(),
+            )
+          else
+            SafeArea(
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 20,
+                    left: 20,
+                    right: 20,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Humble',
+                          style: GoogleFonts.baskervville(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: _showDonateDialog,
-                            child: Icon(
-                              Icons.favorite,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          GestureDetector(
-                            onTap: widget.toggleDarkMode,
-                            child: Icon(
-                              Icons.lightbulb,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 100,
-                  left: 0,
-                  right: 0,
-                  child: FadeTransition(
-                    opacity: _quoteAnimation,
-                    child: SizedBox(
-                      height: 150,
-                      width: double.infinity,
-                      child: _randomQuote != null
-                          ? SingleChildScrollView(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '"${_randomQuote!.text}"',
-                                      style: GoogleFonts.baskervville(
-                                        fontStyle: FontStyle.italic,
-                                        fontSize: 20,
-                                      ),
-                                      textAlign: TextAlign.start,
-                                    ),
-                                    const SizedBox(height: 16.0),
-                                    Text(
-                                      '- ${_randomQuote!.author}',
-                                      style: GoogleFonts.baskervville(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                      textAlign: TextAlign.start,
-                                    ),
-                                  ],
-                                ),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: _showDonateDialog,
+                              child: Icon(
+                                Icons.favorite,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: 24,
                               ),
-                            )
-                          : const SizedBox.shrink(),
+                            ),
+                            const SizedBox(width: 24),
+                            GestureDetector(
+                              onTap: widget.toggleDarkMode,
+                              child: Icon(
+                                Icons.lightbulb,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 280,
-                  left: 0,
-                  right: 0,
-                  bottom: 160,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: ScaleTransition(
-                          scale: Tween<double>(begin: 1.0, end: 1.0).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: _lastMealTime == null ? _buildFastingOptions() : _buildFastingContent(fastingCompleted, message),
+                  Positioned(
+                    top: 100,
+                    left: 0,
+                    right: 0,
+                    child: FadeTransition(
+                      opacity: _quoteAnimation,
+                      child: SizedBox(
+                        height: 150,
+                        width: double.infinity,
+                        child: _randomQuote != null
+                            ? SingleChildScrollView(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '"${_randomQuote!.text}"',
+                                        style: GoogleFonts.baskervville(
+                                          fontStyle: FontStyle.italic,
+                                          fontSize: 20,
+                                        ),
+                                        textAlign: TextAlign.start,
+                                      ),
+                                      const SizedBox(height: 16.0),
+                                      Text(
+                                        '- ${_randomQuote!.author}',
+                                        style: GoogleFonts.baskervville(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                        textAlign: TextAlign.start,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
                   ),
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: 16,
-                  right: 16,
-                  child: _buildActionButton(),
-                ),
-              ],
+                  Positioned(
+                    top: 280,
+                    left: 0,
+                    right: 0,
+                    bottom: 160,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      transitionBuilder: (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 1.0, end: 1.0).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _lastMealTime == null ? _buildFastingOptions() : _buildFastingContent(fastingCompleted, message),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    left: 16,
+                    right: 16,
+                    child: _buildActionButton(),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
