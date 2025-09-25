@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'wave.dart';
+import 'random_wave_colors.dart';
 import 'message_utils.dart';
 import 'donate_dialog.dart';
 import 'storage_service.dart';
@@ -32,6 +34,8 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   late Animation<double> _quoteAnimation;
   late AnimationController _progressController;
 
+  List<Color> _waveColors = [];
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +51,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+    _waveColors = RandomWaveColors.getRandomColors();
     _loadData();
     _selectRandomQuote();
   }
@@ -112,7 +117,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
 
   Future<void> _loadLastMealTime() async {
     final time = await loadLastMealTime();
-    if (time != null) {
+    if (time != null && mounted) {
       setState(() {
         _lastMealTime = time;
       });
@@ -121,7 +126,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
 
   Future<void> _loadSelectedFastingGoal() async {
     final goal = await loadSelectedFastingGoal();
-    if (goal != null) {
+    if (goal != null && mounted) {
       setState(() {
         _selectedFastingGoal = goal;
       });
@@ -130,9 +135,11 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
 
   Future<void> _loadFastDurations() async {
     final durations = await loadFastDurations();
-    setState(() {
-      _fastDurations = durations;
-    });
+    if (mounted) {
+      setState(() {
+        _fastDurations = durations;
+      });
+    }
   }
 
   Future<void> _showCustomFastingDialog() async {
@@ -185,8 +192,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                     onPressed: () {
                       final hours = int.tryParse(controller.text);
                       if (hours != null && hours >= 1 && hours <= 1000) {
-                        _selectedFastingGoal = Duration(hours: hours);
-                        _lastMealTime = DateTime.now();
+                        setState(() {
+                          _selectedFastingGoal = Duration(hours: hours);
+                          _lastMealTime = DateTime.now();
+                        });
                         saveLastMealTime(_lastMealTime);
                         saveSelectedFastingGoal(_selectedFastingGoal);
                         _startTimer();
@@ -229,91 +238,165 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildFastingOptions() {
-    final List<Widget> pickerItems = [
-      for (int hours in _fastingOptions)
-        Center(
-          child: Text(
-            '$hours-hour fast',
-            style: const TextStyle(fontSize: 22),
+  Widget _buildWaves() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: CustomWaveWidget(
+        size: Size(MediaQuery.of(context).size.width, 280),
+        amplitude: 45,
+        frequency: 0.6,
+        waveLayers: [
+          WaveLayer(
+            duration: 15000,
+            heightFactor: 0.8,
+            color: _waveColors.isNotEmpty ? _waveColors[0].withOpacity(0.3) : Colors.blue.withOpacity(0.3),
+            waveShape: WaveShapeType.sine,
           ),
-        ),
-      const Center(
-        child: Text(
-          'Custom',
-          style: TextStyle(fontSize: 22),
-        ),
+          WaveLayer(
+            duration: 20000,
+            heightFactor: 0.6,
+            color: _waveColors.length > 1 ? _waveColors[1].withOpacity(0.4) : Colors.green.withOpacity(0.4),
+            waveShape: WaveShapeType.cosine,
+          ),
+          WaveLayer(
+            duration: 18000,
+            heightFactor: 0.5,
+            color: _waveColors.length > 2 ? _waveColors[2].withOpacity(0.35) : Colors.red.withOpacity(0.35),
+            waveShape: WaveShapeType.gerstner,
+            steepness: 0.3,
+          ),
+        ],
       ),
-    ];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 150,
-          child: CupertinoPicker(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            itemExtent: 40,
-            scrollController: FixedExtentScrollController(initialItem: _selectedFastingIndex),
-            onSelectedItemChanged: (int index) {
-              setState(() {
-                _selectedFastingIndex = index;
-              });
-            },
-            children: pickerItems,
-          ),
-        ),
-      ],
     );
   }
 
-  Widget _buildProgressBar(double progressValue) {
-    const double barWidth = 300.0;
-    final theme = Theme.of(context);
-    final goalHours = _selectedFastingGoal?.inHours ?? 0;
+  Widget _buildFastingOptions() {
+    final PageController pageController = PageController(initialPage: _selectedFastingIndex);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: barWidth,
-          height: 12,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            border: Border.all(
-              color: theme.dividerColor,
-              width: 2.0,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Stack(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 500),
-                width: barWidth * progressValue,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withOpacity(0.7),
-                      theme.colorScheme.primary,
-                    ],
+    return SizedBox(
+      height: 280,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: pageController,
+                  onPageChanged: (int index) {
+                    setState(() {
+                      _selectedFastingIndex = index;
+                    });
+                  },
+                  itemCount: _fastingOptions.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index < _fastingOptions.length) {
+                      return _buildFastingOptionCard(_fastingOptions[index]);
+                    } else {
+                      return _buildCustomOptionCard();
+                    }
+                  },
+                ),
+                if (_selectedFastingIndex < _fastingOptions.length)
+                  Positioned(
+                    right: 20,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_selectedFastingIndex < _fastingOptions.length) {
+                            pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        child: Icon(
+                          Icons.arrow_forward_ios,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 32,
+                        ),
+                      ),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(10),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _fastingOptions.length + 1,
+              (index) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                width: _selectedFastingIndex == index ? 12.0 : 8.0,
+                height: _selectedFastingIndex == index ? 12.0 : 8.0,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _selectedFastingIndex == index
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          '${goalHours}h',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-            fontSize: 16,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFastingOptionCard(int hours) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$hours',
+            style: TextStyle(
+              fontSize: 192,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+              height: 1.0,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Text(
+            'h',
+            style: TextStyle(
+              fontSize: 96,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+              height: 1.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomOptionCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Custom',
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -322,27 +405,48 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     final int hours = duration.inHours;
     final int minutes = duration.inMinutes.remainder(60);
 
-    final baseStyle = TextStyle(
-      fontWeight: FontWeight.bold,
-      color: theme.colorScheme.onSurface,
-    );
-
-    String pluralize(int value, String unit) {
-      return '$value $unit${value == 1 ? '' : 's'}';
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          pluralize(hours, 'hour'),
-          style: baseStyle.copyWith(fontSize: 60),
+          '$hours',
+          style: TextStyle(
+            fontSize: 100,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+            height: 0.9,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(width: 6),
         Text(
-          pluralize(minutes, 'minute'),
-          style: baseStyle.copyWith(fontSize: 32),
+          'h',
+          style: TextStyle(
+            fontSize: 50,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+            height: 0.9,
+          ),
+        ),
+        const SizedBox(width: 20),
+        Text(
+          '$minutes',
+          style: TextStyle(
+            fontSize: 64,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            height: 0.9,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'm',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            height: 0.9,
+          ),
         ),
       ],
     );
@@ -350,48 +454,44 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
 
   Widget _buildFastingContent(bool fastingCompleted, String message) {
     Duration remainingTime = _calculateRemainingTime();
-    double progressValue = 0.0;
-    if (_selectedFastingGoal != null && _selectedFastingGoal!.inSeconds > 0) {
-      final elapsedSeconds = _elapsedTime.inSeconds;
-      final goalSeconds = _selectedFastingGoal!.inSeconds;
-      progressValue = (elapsedSeconds / goalSeconds).clamp(0.0, 1.0);
-    }
     return Column(
       key: const ValueKey('fastingContent'),
-      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
-        const SizedBox(height: 75),
         _buildTimeDisplay(remainingTime > Duration.zero ? remainingTime : Duration.zero),
-        const SizedBox(height: 20),
-        _buildProgressBar(progressValue),
-        const SizedBox(height: 20),
-        Shimmer.fromColors(
-          period: const Duration(seconds: 2),
-          baseColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-          highlightColor: Theme.of(context).colorScheme.onSurface,
-          child: Text(
-            message,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+        const SizedBox(height: 50),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  if (fastingCompleted)
+                    FadeTransition(
+                      opacity: _quoteAnimation,
+                      child: const Text(
+                        'Fasting Completed!',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: 20),
-        if (fastingCompleted)
-          FadeTransition(
-            opacity: _quoteAnimation,
-            child: const Text(
-              'Fasting Completed!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
       ],
     );
   }
@@ -406,11 +506,11 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
               int hours = _fastingOptions[_selectedFastingIndex];
               _selectedFastingGoal = Duration(hours: hours);
               _lastMealTime = DateTime.now();
-              saveLastMealTime(_lastMealTime);
-              saveSelectedFastingGoal(_selectedFastingGoal);
-              _startTimer();
-              _selectRandomQuote();
             });
+            saveLastMealTime(_lastMealTime);
+            saveSelectedFastingGoal(_selectedFastingGoal);
+            _startTimer();
+            _selectRandomQuote();
           } else {
             _showCustomFastingDialog();
           }
@@ -423,21 +523,21 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
             _lastMealTime = null;
             _elapsedTime = const Duration(seconds: 0);
             _selectedFastingGoal = null;
-            _stopTimer();
-            _selectRandomQuote();
           });
+          _stopTimer();
+          _selectRandomQuote();
         }
       },
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        minimumSize: const Size(double.infinity, 100),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(50),
         ),
         textStyle: const TextStyle(
-          fontSize: 16,
+          fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -450,92 +550,124 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     Duration remainingTime = _calculateRemainingTime();
     bool fastingCompleted = remainingTime <= Duration.zero && _selectedFastingGoal != null;
     String message = calculateMessage(_elapsedTime);
+    bool fastingActive = _lastMealTime != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Humble',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.favorite),
-          onPressed: _showDonateDialog,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.lightbulb),
-            onPressed: widget.toggleDarkMode,
-          ),
-        ],
-      ),
       body: Stack(
         children: [
-          Positioned(
-            top: 60,
-            left: 0,
-            right: 0,
-            child: FadeTransition(
-              opacity: _quoteAnimation,
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                child: _randomQuote != null
-                    ? SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                '"${_randomQuote!.text}"',
-                                style: const TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8.0),
-                              Text(
-                                '- ${_randomQuote!.author}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+          if (fastingActive) _buildWaves(),
+          SafeArea(
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Humble',
+                        style: GoogleFonts.baskervville(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
-                      )
-                    : Container(),
-              ),
-            ),
-          ),
-          Center(
-            child: SingleChildScrollView(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 1.0, end: 1.0).animate(animation),
-                      child: child,
+                      ),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _showDonateDialog,
+                            child: Icon(
+                              Icons.favorite,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          GestureDetector(
+                            onTap: widget.toggleDarkMode,
+                            child: Icon(
+                              Icons.lightbulb,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              size: 24,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: 100,
+                  left: 0,
+                  right: 0,
+                  child: FadeTransition(
+                    opacity: _quoteAnimation,
+                    child: SizedBox(
+                      height: 150,
+                      width: double.infinity,
+                      child: _randomQuote != null
+                          ? SingleChildScrollView(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '"${_randomQuote!.text}"',
+                                      style: GoogleFonts.baskervville(
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 20,
+                                      ),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    Text(
+                                      '- ${_randomQuote!.author}',
+                                      style: GoogleFonts.baskervville(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                  );
-                },
-                child: _lastMealTime == null ? _buildFastingOptions() : _buildFastingContent(fastingCompleted, message),
-              ),
+                  ),
+                ),
+                Positioned(
+                  top: 280,
+                  left: 0,
+                  right: 0,
+                  bottom: 160,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 1.0, end: 1.0).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _lastMealTime == null ? _buildFastingOptions() : _buildFastingContent(fastingCompleted, message),
+                  ),
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 16,
+                  right: 16,
+                  child: _buildActionButton(),
+                ),
+              ],
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 45.0),
-        child: _buildActionButton(),
       ),
     );
   }

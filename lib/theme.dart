@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 
 ThemeData buildLightTheme() {
   return ThemeData.light().copyWith(
-    scaffoldBackgroundColor: const Color(0xFFD5C4A1),
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
     colorScheme: const ColorScheme.light(
-      primary: Color(0xFF665C54),
-      secondary: Color(0xFF928374),
-      surface: Color(0xFFD5C4A1),
-      error: Color(0xFFCC241D),
-      onPrimary: Color(0xFFFBF1C7),
-      onSecondary: Color(0xFF3C3836),
-      onSurface: Color(0xFF3C3836),
-      onError: Color(0xFFFBF1C7),
+      primary: Color(0xFF000000),
+      secondary: Color(0xFF000000),
+      surface: Color(0xFFFFFFFF),
+      error: Color(0xFF000000),
+      onPrimary: Color(0xFFFFFFFF),
+      onSecondary: Color(0xFFFFFFFF),
+      onSurface: Color(0xFF000000),
+      onError: Color(0xFFFFFFFF),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF665C54),
-        foregroundColor: const Color(0xFFFBF1C7),
+        backgroundColor: const Color(0xFF000000),
+        foregroundColor: const Color(0xFFFFFFFF),
       ),
     ),
   );
@@ -24,21 +24,21 @@ ThemeData buildLightTheme() {
 
 ThemeData buildDarkTheme() {
   return ThemeData.dark().copyWith(
-    scaffoldBackgroundColor: const Color(0xFF282828),
+    scaffoldBackgroundColor: const Color(0xFF000000),
     colorScheme: const ColorScheme.dark(
-      primary: Color(0xFFBDAE93),
-      secondary: Color(0xFF665C54),
-      surface: Color(0xFF282828),
-      error: Color(0xFFFB4934),
-      onPrimary: Color(0xFF282828),
-      onSecondary: Color(0xFFD5C4A1),
-      onSurface: Color(0xFFD5C4A1),
-      onError: Color(0xFF282828),
+      primary: Color(0xFFFFFFFF),
+      secondary: Color(0xFFFFFFFF),
+      surface: Color(0xFF000000),
+      error: Color(0xFFFFFFFF),
+      onPrimary: Color(0xFF000000),
+      onSecondary: Color(0xFF000000),
+      onSurface: Color(0xFFFFFFFF),
+      onError: Color(0xFF000000),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF665C54),
-        foregroundColor: const Color(0xFF3C3836),
+        backgroundColor: const Color(0xFFFFFFFF),
+        foregroundColor: const Color(0xFF000000),
       ),
     ),
   );

@@ -27,10 +27,6 @@ final List<Quote> fastingQuotes = [
     "Dallas Willard",
   ),
   Quote(
-    "The principle of fasting is taught in almost all major world religions as a means of developing a higher level of self-mastery and self-control, and also a deeper awareness of how really dependent we are.",
-    "Stephen Covey",
-  ),
-  Quote(
     "Fasting is a medicine.",
     "Saint John Chrysostom",
   ),
@@ -71,10 +67,6 @@ final List<Quote> fastingQuotes = [
     "Rumi",
   ),
   Quote(
-    "I desired as many as could to join together in fasting and prayer, that God would restore the spirit of love and of a sound mind to the poor deluded rebels in America.",
-    "John Wesley",
-  ),
-  Quote(
     "When the stomach is full, it is easy to talk of fasting.",
     "St. Jerome",
   ),
@@ -99,20 +91,12 @@ final List<Quote> fastingQuotes = [
     "Matthew McConaughey",
   ),
   Quote(
-    "His [Daniel] fast broke the power of the delayer and released the angels of God so that God's purposes could be revealed and served.",
-    "Jentezen Franklin",
-  ),
-  Quote(
     "Fasting lowers your blood pressure and can lower your cholesterol.",
     "Jentezen Franklin",
   ),
   Quote(
     "When the Holy Spirit calls your to fast, He is preparing you for what is ahead.",
     "Jentezen Franklin",
-  ),
-  Quote(
-    "Jesus himself has shown us by his own example that prayer and fasting are the first and most effective weapons against the forces of evil.",
-    "Pope John Paul II",
   ),
   Quote(
     "He that lives upon hope will die fasting.",
@@ -141,10 +125,6 @@ final List<Quote> fastingQuotes = [
   Quote(
     "Fasting of the body is food for the soul.",
     "Saint John Chrysostom",
-  ),
-  Quote(
-    "If you want to know the religion of a man, do not look at how much he prays and fasts, rather, look at how he treats people.",
-    "Ja'far al-Sadiq",
   ),
   Quote(
     "Our prayers and fastings are of less avail, unless they are aided by almsgiving.",

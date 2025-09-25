@@ -44,8 +44,7 @@ class _HumbleState extends State<Humble> {
       statusBarBrightness: _isDarkMode ? Brightness.light : Brightness.dark,
       statusBarIconBrightness: _isDarkMode ? Brightness.light : Brightness.dark,
       systemNavigationBarColor: _isDarkMode ? Colors.black : Colors.white,
-      systemNavigationBarIconBrightness:
-          _isDarkMode ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness: _isDarkMode ? Brightness.light : Brightness.dark,
     ));
   }
 
