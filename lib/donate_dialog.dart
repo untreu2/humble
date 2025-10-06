@@ -12,14 +12,45 @@ class DonateDialog extends StatefulWidget {
 class _DonateDialogState extends State<DonateDialog> {
   bool _copied = false;
 
-  void _copyAddress() {
-    Clipboard.setData(
-      const ClipboardData(text: 'untreu@walletofsatoshi.com'),
-    ).then((_) {
+  void _openEmail() async {
+    const email = 'emiryorulmaz@ikmail.com';
+    final Uri emailUri = Uri.parse('mailto:$email');
+    
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+      } else {
+        // Fallback: copy email to clipboard
+        Clipboard.setData(ClipboardData(text: email));
+        setState(() {
+          _copied = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Email copied to clipboard: $email'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _copied = false;
+            });
+          }
+        });
+      }
+    } catch (e) {
+      // Fallback: copy email to clipboard
+      Clipboard.setData(ClipboardData(text: email));
       setState(() {
         _copied = true;
       });
-
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Email copied to clipboard: $email'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() {
@@ -27,7 +58,7 @@ class _DonateDialogState extends State<DonateDialog> {
           });
         }
       });
-    });
+    }
   }
 
   void _launchGitHub() async {
@@ -41,87 +72,76 @@ class _DonateDialogState extends State<DonateDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Donate via Lightning (BTC)',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      content: Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 300,
-            height: 25,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: _copied
-                        ? Row(
-                            key: const ValueKey('copied'),
-                            children: [
-                              Icon(Icons.check,
-                                  size: 18,
-                                  color: Theme.of(context).colorScheme.primary),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Copied!',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            'untreu@walletofsatoshi.com',
-                            key: const ValueKey('address'),
-                            style: const TextStyle(fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _openEmail,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 100),
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    elevation: 0,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                    child: Text(_copied ? 'Copied mail!' : 'Reach me'),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Copy LN address',
-                  onPressed: _copyAddress,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 8),
-          Text(
-            'Source Code',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 4),
-          GestureDetector(
-            onTap: _launchGitHub,
-            child: Text(
-              'github.com/untreu2/humble',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                decoration: TextDecoration.underline,
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _launchGitHub,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 100),
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    elevation: 0,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                    child: const Text('Source code'),
+                  ),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );

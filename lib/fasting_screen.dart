@@ -178,9 +178,12 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                   ),
                   if (errorMessage != null) ...[
                     const SizedBox(height: 8.0),
-                    Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red),
+                    MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   ],
                 ],
@@ -218,7 +221,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Start fasting'),
+                    child: MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: const Text('Start fasting'),
+                    ),
                   ),
                 ),
               ],
@@ -230,8 +236,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   }
 
   void _showDonateDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return const DonateDialog();
       },
@@ -356,7 +364,9 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+        MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          child: Text(
             '$hours',
             style: TextStyle(
               fontSize: 192,
@@ -365,14 +375,18 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
               height: 1.0,
             ),
           ),
+        ),
           const SizedBox(width: 8),
-          Text(
-            'h',
-            style: TextStyle(
-              fontSize: 96,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-              height: 1.0,
+          MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+            child: Text(
+              'h',
+              style: TextStyle(
+                fontSize: 96,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+                height: 1.0,
+              ),
             ),
           ),
         ],
@@ -387,12 +401,15 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Custom',
-            style: TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+          MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+            child: Text(
+              'Custom',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
         ],
@@ -409,43 +426,55 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$hours',
-          style: TextStyle(
-            fontSize: 100,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-            height: 0.9,
+        MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          child: Text(
+            '$hours',
+            style: TextStyle(
+              fontSize: 100,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              height: 0.9,
+            ),
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          'h',
-          style: TextStyle(
-            fontSize: 50,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-            height: 0.9,
+        MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          child: Text(
+            'h',
+            style: TextStyle(
+              fontSize: 50,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              height: 0.9,
+            ),
           ),
         ),
         const SizedBox(width: 20),
-        Text(
-          '$minutes',
-          style: TextStyle(
-            fontSize: 64,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-            height: 0.9,
+        MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          child: Text(
+            '$minutes',
+            style: TextStyle(
+              fontSize: 64,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              height: 0.9,
+            ),
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          'm',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-            height: 0.9,
+        MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          child: Text(
+            'm',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              height: 0.9,
+            ),
           ),
         ),
       ],
@@ -466,25 +495,31 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 children: [
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      fontSize: 16,
+                  MediaQuery(
+                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                    child: Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   if (fastingCompleted)
                     FadeTransition(
                       opacity: _quoteAnimation,
-                      child: const Text(
-                        'Fasting Completed!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                      child: MediaQuery(
+                        data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                        child: const Text(
+                          'Fasting Completed!',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
                 ],
@@ -503,14 +538,17 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           top: 210,
           left: 0,
           right: 0,
-          child: Text(
-            'Congrats!',
-            style: GoogleFonts.baskervville(
-              fontSize: 72,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+          child:           MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+            child: Text(
+              'Congrats!',
+              style: GoogleFonts.baskervville(
+                fontSize: 72,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
         ),
         Positioned(
@@ -544,7 +582,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                 fontWeight: FontWeight.w600,
               ),
             ),
-            child: const Text('Just do it again'),
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+              child: const Text('Just do it again'),
+            ),
           ),
         ),
       ],
@@ -596,7 +637,10 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           fontWeight: FontWeight.w600,
         ),
       ),
-      child: Text(fastingActive ? 'End fasting' : 'Start fasting'),
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+        child: Text(fastingActive ? 'End fasting' : 'Start fasting'),
+      ),
     );
   }
 
@@ -626,12 +670,15 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Humble',
-                          style: GoogleFonts.baskervville(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
+                        MediaQuery(
+                          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                          child: Text(
+                            'Humble',
+                            style: GoogleFonts.baskervville(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                           ),
                         ),
                         Row(
@@ -644,7 +691,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                                 size: 24,
                               ),
                             ),
-                            const SizedBox(width: 24),
+                            const SizedBox(width: 36),
                             GestureDetector(
                               onTap: widget.toggleDarkMode,
                               child: Icon(
@@ -674,22 +721,28 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        '"${_randomQuote!.text}"',
-                                        style: GoogleFonts.baskervville(
-                                          fontStyle: FontStyle.italic,
-                                          fontSize: 20,
+                                      MediaQuery(
+                                        data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                                        child: Text(
+                                          '"${_randomQuote!.text}"',
+                                          style: GoogleFonts.baskervville(
+                                            fontStyle: FontStyle.italic,
+                                            fontSize: 20,
+                                          ),
+                                          textAlign: TextAlign.start,
                                         ),
-                                        textAlign: TextAlign.start,
                                       ),
                                       const SizedBox(height: 16.0),
-                                      Text(
-                                        '- ${_randomQuote!.author}',
-                                        style: GoogleFonts.baskervville(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
+                                      MediaQuery(
+                                        data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                                        child: Text(
+                                          '- ${_randomQuote!.author}',
+                                          style: GoogleFonts.baskervville(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                          textAlign: TextAlign.start,
                                         ),
-                                        textAlign: TextAlign.start,
                                       ),
                                     ],
                                   ),
