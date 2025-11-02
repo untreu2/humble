@@ -29,6 +29,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   List<Duration> _fastDurations = [];
   final List<int> _fastingOptions = [8, 16, 24, 48, 72];
   int _selectedFastingIndex = 0;
+  int _customSelectedHours = 12;
   Quote? _randomQuote;
   late AnimationController _quoteController;
   late Animation<double> _quoteAnimation;
@@ -142,99 +143,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     }
   }
 
-  Future<void> _showCustomFastingDialog() async {
-    final TextEditingController controller = TextEditingController();
-    String? errorMessage;
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    autofocus: true,
-                    controller: controller,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: 'Enter fasting duration (hours)',
-                      labelStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  if (errorMessage != null) ...[
-                    const SizedBox(height: 8.0),
-                    MediaQuery(
-                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                      child: Text(
-                        errorMessage!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              actions: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final hours = int.tryParse(controller.text);
-                      if (hours != null && hours >= 1 && hours <= 1000) {
-                        setState(() {
-                          _selectedFastingGoal = Duration(hours: hours);
-                          _lastMealTime = DateTime.now();
-                        });
-                        saveLastMealTime(_lastMealTime);
-                        saveSelectedFastingGoal(_selectedFastingGoal);
-                        _startTimer();
-                        _selectRandomQuote();
-                        Navigator.of(context).pop();
-                      } else {
-                        setState(() {
-                          errorMessage = 'Please enter a valid number between 1 and 1000.';
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    child: MediaQuery(
-                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                      child: const Text('Start fasting'),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   void _showDonateDialog() {
     showModalBottomSheet(
       context: context,
@@ -331,6 +239,27 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                       ),
                     ),
                   ),
+                if (_selectedFastingIndex == _fastingOptions.length)
+                  Positioned(
+                    left: 20,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -364,18 +293,18 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-          child: Text(
-            '$hours',
-            style: TextStyle(
-              fontSize: 192,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-              height: 1.0,
+          MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+            child: Text(
+              '$hours',
+              style: TextStyle(
+                fontSize: 192,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+                height: 1.0,
+              ),
             ),
           ),
-        ),
           const SizedBox(width: 8),
           MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
@@ -401,14 +330,57 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-            child: Text(
-              'Custom',
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+          Transform.translate(
+            offset: const Offset(0, -40),
+            child: SizedBox(
+              width: 200,
+              height: 240,
+              child: CupertinoPicker.builder(
+                scrollController: FixedExtentScrollController(initialItem: _customSelectedHours - 1),
+                backgroundColor: Colors.transparent,
+                itemExtent: 80,
+                onSelectedItemChanged: (int index) {
+                  setState(() {
+                    _customSelectedHours = index + 1;
+                  });
+                },
+                childCount: 666,
+                itemBuilder: (context, index) {
+                  final hours = index + 1;
+                  return Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        MediaQuery(
+                          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                          child: Text(
+                            '$hours',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        MediaQuery(
+                          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                          child: Text(
+                            'h',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -538,7 +510,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
           top: 210,
           left: 0,
           right: 0,
-          child:           MediaQuery(
+          child: MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
             child: Text(
               'Congrats!',
@@ -608,7 +580,14 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
             _startTimer();
             _selectRandomQuote();
           } else {
-            _showCustomFastingDialog();
+            setState(() {
+              _selectedFastingGoal = Duration(hours: _customSelectedHours);
+              _lastMealTime = DateTime.now();
+            });
+            saveLastMealTime(_lastMealTime);
+            saveSelectedFastingGoal(_selectedFastingGoal);
+            _startTimer();
+            _selectRandomQuote();
           }
         } else {
           setState(() {
