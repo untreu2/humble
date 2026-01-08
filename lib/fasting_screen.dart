@@ -231,13 +231,12 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                     ),
                   ),
                 ),
-              if (_selectedFastingIndex == 0)
-                const SizedBox(width: 64),
+              if (_selectedFastingIndex == 0) const SizedBox(width: 64),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   _fastingOptions.length,
-                      (index) => Container(
+                  (index) => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4.0),
                     width: _selectedFastingIndex == index ? 12.0 : 8.0,
                     height: _selectedFastingIndex == index ? 12.0 : 8.0,
@@ -267,8 +266,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                     ),
                   ),
                 ),
-              if (_selectedFastingIndex == _fastingOptions.length - 1)
-                const SizedBox(width: 64),
+              if (_selectedFastingIndex == _fastingOptions.length - 1) const SizedBox(width: 64),
             ],
           ),
         ],
@@ -280,7 +278,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MediaQuery(
