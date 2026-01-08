@@ -645,7 +645,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                     ),
                   ),
                   Positioned(
-                    top: 280,
+                    top: fastingActive ? 280 : 200,
                     left: 0,
                     right: 0,
                     bottom: 160,
