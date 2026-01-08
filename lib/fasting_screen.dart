@@ -29,7 +29,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   List<Duration> _fastDurations = [];
   final List<int> _fastingOptions = [8, 16, 24, 48, 72];
   int _selectedFastingIndex = 0;
-  int _customSelectedHours = 12;
   Quote? _randomQuote;
   late AnimationController _quoteController;
   late Animation<double> _quoteAnimation;
@@ -198,88 +197,79 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Stack(
-              children: [
-                PageView.builder(
-                  controller: pageController,
-                  onPageChanged: (int index) {
-                    setState(() {
-                      _selectedFastingIndex = index;
-                    });
-                  },
-                  itemCount: _fastingOptions.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index < _fastingOptions.length) {
-                      return _buildFastingOptionCard(_fastingOptions[index]);
-                    } else {
-                      return _buildCustomOptionCard();
-                    }
-                  },
-                ),
-                if (_selectedFastingIndex < _fastingOptions.length)
-                  Positioned(
-                    right: 20,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_selectedFastingIndex < _fastingOptions.length) {
-                            pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        },
-                        child: Icon(
-                          Icons.arrow_forward_ios,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                  ),
-                if (_selectedFastingIndex == _fastingOptions.length)
-                  Positioned(
-                    left: 20,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        },
-                        child: Icon(
-                          Icons.arrow_back_ios,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            child: PageView.builder(
+              controller: pageController,
+              onPageChanged: (int index) {
+                setState(() {
+                  _selectedFastingIndex = index;
+                });
+              },
+              itemCount: _fastingOptions.length,
+              itemBuilder: (context, index) {
+                return _buildFastingOptionCard(_fastingOptions[index]);
+              },
             ),
           ),
           const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _fastingOptions.length + 1,
-              (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                width: _selectedFastingIndex == index ? 12.0 : 8.0,
-                height: _selectedFastingIndex == index ? 12.0 : 8.0,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _selectedFastingIndex == index
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (_selectedFastingIndex > 0)
+                GestureDetector(
+                  onTap: () {
+                    pageController.previousPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 32.0),
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 32,
+                    ),
+                  ),
+                ),
+              if (_selectedFastingIndex == 0)
+                const SizedBox(width: 64),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  _fastingOptions.length,
+                      (index) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                    width: _selectedFastingIndex == index ? 12.0 : 8.0,
+                    height: _selectedFastingIndex == index ? 12.0 : 8.0,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _selectedFastingIndex == index
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              if (_selectedFastingIndex < _fastingOptions.length - 1)
+                GestureDetector(
+                  onTap: () {
+                    pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 32.0),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 32,
+                    ),
+                  ),
+                ),
+              if (_selectedFastingIndex == _fastingOptions.length - 1)
+                const SizedBox(width: 64),
+            ],
           ),
         ],
       ),
@@ -315,72 +305,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.primary,
                 height: 1.0,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomOptionCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Transform.translate(
-            offset: const Offset(0, -40),
-            child: SizedBox(
-              width: 200,
-              height: 240,
-              child: CupertinoPicker.builder(
-                scrollController: FixedExtentScrollController(initialItem: _customSelectedHours - 1),
-                backgroundColor: Colors.transparent,
-                itemExtent: 80,
-                onSelectedItemChanged: (int index) {
-                  setState(() {
-                    _customSelectedHours = index + 1;
-                  });
-                },
-                childCount: 666,
-                itemBuilder: (context, index) {
-                  final hours = index + 1;
-                  return Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        MediaQuery(
-                          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                          child: Text(
-                            '$hours',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        MediaQuery(
-                          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                          child: Text(
-                            'h',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
               ),
             ),
           ),
@@ -573,15 +497,6 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
             setState(() {
               int hours = _fastingOptions[_selectedFastingIndex];
               _selectedFastingGoal = Duration(hours: hours);
-              _lastMealTime = DateTime.now();
-            });
-            saveLastMealTime(_lastMealTime);
-            saveSelectedFastingGoal(_selectedFastingGoal);
-            _startTimer();
-            _selectRandomQuote();
-          } else {
-            setState(() {
-              _selectedFastingGoal = Duration(hours: _customSelectedHours);
               _lastMealTime = DateTime.now();
             });
             saveLastMealTime(_lastMealTime);
