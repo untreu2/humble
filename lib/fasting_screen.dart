@@ -27,7 +27,7 @@ class _FastingScreenState extends State<FastingScreen> with TickerProviderStateM
   Duration? _selectedFastingGoal;
   bool _timerRunning = false;
   List<Duration> _fastDurations = [];
-  final List<int> _fastingOptions = [8, 16, 24, 48, 72];
+  final List<int> _fastingOptions = [12, 16, 24, 48, 72];
   int _selectedFastingIndex = 0;
   Quote? _randomQuote;
   late AnimationController _quoteController;
